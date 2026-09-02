@@ -267,8 +267,6 @@ ob_start();
   </div>
 
   <div class="footer-images">
-    <?php if ($imgCrede7): ?><img src="<?= $imgCrede7 ?>"><?php endif; ?>
-    <?php if ($imgCeara): ?><img src="<?= $imgCeara ?>"><?php endif; ?>
     <?php if ($imgLogo): ?><img src="<?= $imgLogo ?>"><?php endif; ?>
   </div>
 </body>
