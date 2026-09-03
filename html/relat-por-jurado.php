@@ -145,6 +145,9 @@ ob_start();
       border: 1px solid #000;
       text-align: center;
     }
+    th{
+      background-color: #d1e7dd;
+    }
 
     th.nota-final,
     td.nota-final {
