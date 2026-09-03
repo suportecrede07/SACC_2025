@@ -249,6 +249,10 @@ ob_start();
       text-align: center;
     }
 
+    th {
+      background-color: #d1e7dd;
+    }
+
     h2 {
       text-align: center;
     }
@@ -319,9 +323,9 @@ ob_start();
     <div style="font-size: 15px;">
       <p class="text"><b>RESULTADO FINAL</b></p>
     </div>
-    <div class="align-items-center flex-column d-flex" style="font-size: 12px;">
-      <p><b>Categoria: <?= htmlspecialchars($categoriaNome) ?></b></p>
-      <p><b>Área: <?= htmlspecialchars($areaNome) ?></b></p>
+    <div class="categoria_area" style="font-size: 12px;">
+      <p><b>Categoria: </b> <?= htmlspecialchars($categoriaNome) ?></p>
+      <p><b>Área: </b><?= htmlspecialchars($areaNome) ?></p>
     </div>
   </nav>
 
