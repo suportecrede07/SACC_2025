@@ -165,7 +165,7 @@ ob_start();
     }
 
     th {
-      background-color: #d1e7dd;
+      background-color: #499472;
     }
 
     .header-title {
