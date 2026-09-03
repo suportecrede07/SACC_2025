@@ -98,7 +98,6 @@ ob_start();
             grid-template-columns: 1fr 1fr;
             gap: 15px 30px;
             margin-bottom: 25px;
-            font-weight: 600;
         }
 
         table thead th {
