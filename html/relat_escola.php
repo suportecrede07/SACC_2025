@@ -192,6 +192,10 @@ ob_start();
       text-align: center;
     }
 
+    th {
+      background-color: #d1e7dd;
+    }
+
     td {
       padding: 0;
     }
@@ -199,13 +203,21 @@ ob_start();
     .nav {
       color: #000;
       text-align: center;
-      padding: 10px 0;
+      margin-bottom: 15px;
+      padding: 0px 0;
+    }
 
+    .nav p{
+      margin-top: 0px;
     }
 
     .cabecalho {
       text-align: center;
-      margin-bottom: 10px;
+      margin-top: 5px;
+    }
+
+    .cabecalho p{
+      margin-bottom: 5px;
     }
 
     .logos {
