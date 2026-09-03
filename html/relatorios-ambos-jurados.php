@@ -199,7 +199,7 @@ ob_start();
 <body>
   <div class="text-center">
     <img src="<?= $imgCearaCientifico ?>" style="height:80px;">
-    <p><b>ETAPA REGIONAL - 2025</b></p>
+    <p><b>ETAPA REGIONAL - 2026</b></p>
   </div>
 
   <?php
