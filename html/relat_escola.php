@@ -21,11 +21,13 @@ $sql = "SELECT
         t.titulo,
         j.id_jurados,
         j.usuario AS nome_jurado,
+        a.nome_area AS area,
         av.criterio,
         av.nota
     FROM Trabalhos t
     LEFT JOIN Avaliacoes av ON av.id_trabalho = t.id_trabalhos
     LEFT JOIN Jurados j ON j.id_jurados = av.id_jurado
+    LEFT JOIN Areas a ON t.id_areas = a.id_area
     WHERE t.id_escolas = ?
 ";
 $stmt = $pdo->prepare($sql);
@@ -74,7 +76,8 @@ foreach ($dados as $row) {
   if (!isset($trabalhos[$id_trabalho])) {
     $trabalhos[$id_trabalho] = [
       'id_trabalhos' => $id_trabalho,
-      'titulo' => $row['titulo']
+      'titulo' => $row['titulo'],
+      'area' => $row['area'] ?? 'Sem área'
     ];
   }
 
@@ -108,6 +111,7 @@ foreach ($trabalhos as $trabalho) {
   $dadosCalculados[$trabalho['titulo']] = [
     'id_trabalho' => $id_trabalho,
     'titulo' => $trabalho['titulo'],
+    'area' => $trabalho['area'],
     'nota_final' => $notaFinal,
     'notas_por_jurado' => $notasPorJurado,
   ];
@@ -302,6 +306,7 @@ ob_start();
         <thead class="table-secondary text-center align-middle" style="font-size: 8px;">
           <tr>
             <th rowspan="2">Título</th>
+            <th rowspan="2">Área</th>
             <?php foreach ($criterios as $nome): ?>
               <th colspan="2"><?= $nome ?></th>
             <?php endforeach; ?>
@@ -322,6 +327,7 @@ ob_start();
           <?php foreach ($dadosCalculados as $titulo => $dadosTrabalho): ?>
             <tr>
               <td><?= htmlspecialchars($titulo) ?></td>
+              <td><?= htmlspecialchars($dadosTrabalho['area']) ?></td>
 
               <?php foreach ($criterios as $id_criterio => $nome_criterio): ?>
                 <?php for ($i = 0; $i < 2; $i++): ?>
