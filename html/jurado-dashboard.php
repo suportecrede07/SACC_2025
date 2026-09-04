@@ -189,7 +189,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><textarea class="form-control" name="comentario3" cols="50" style="max-height: 30px; border: 1px solid;"></textarea></td>
                   </tr>
                   <tr>
-                    <td><b>Impacto para a construção de uma sociedade que promova os saberes científicos em tempos de crise climática global</b></td>
+                    <td><b>Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática: o conhecimento a serviço da vida coletiva</b></td>
                     <td style="width: 100px;"><input type="text" inputmode="numeric" class="form-control nota-auto" name="criterio4" maxlength="5" style="border: 1px solid;" required /></td>
                     <td><textarea class="form-control" name="comentario4" cols="50" style="max-height: 30px; border: 1px solid;"></textarea></td>
                   </tr>
