@@ -45,8 +45,8 @@ $trabalhos = $pdo->query("
   <div id="sidebar" style="background-color: #4C8F5A;">
     <div>
       <button class="toggle-btn" onclick="toggleSidebar()">
-        <img src="../assets/img/SIMBOLO.png" alt="SAFE">
-        <span class="brand-text">SAFE</span>
+        <img src="../assets/img/SIMBOLO.png" alt="SAFC">
+        <span class="brand-text">SAFC</span>
       </button>
       <ul class="nav flex-column">
         <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.png" class="dashboard"></i> <span

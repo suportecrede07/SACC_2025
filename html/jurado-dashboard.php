@@ -66,7 +66,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <header class="menu-superior">
     <div class="container-fluid" style="width: 100%; display: flex; justify-content: center; align-items: center; position: relative;">
       <a href="../php/JuradoLogout.php" class="left-item" style="position: absolute; left: 15px;"><img src="../assets/img/sair.png" alt="Sair" /></a>
-      <img src="../assets/img/cearacientifico.png" class="center-item" style="max-width: 150px;" alt="Logo Ceará Científico" />
+      <img src="../assets/img/SACC.png" class="center-item" style="max-width: 150px;" alt="Logo SAFC" />
     </div>
   </header>
 
