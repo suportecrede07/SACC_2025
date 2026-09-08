@@ -158,137 +158,77 @@ ob_start();
   <meta charset="UTF-8">
   <title>Relatório por Escola</title>
   <style>
-    table tbody td {
-      word-wrap: break-word;
-      word-break: break-word;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
 
-      padding: 3px;
-      border: 1px solid #000;
+    .text-center {
+      text-align: center;
+    }
+
+    .table-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
     }
 
     table {
-      width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
-    }
-
-    body {
-      font-family: 'DejaVu Sans', sans-serif;
+      font-size: 9px;
+      width: 100%;
+      max-width: 1200px;
     }
 
     th,
     td {
-      border: 1px solid #000;
-      padding: 2px;
-      text-align: center;
-      word-wrap: break-word;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    table th,
-    table td {
       border: 1px solid #000;
       padding: 4px;
       text-align: center;
     }
 
     th {
-      background-color: #d1e7dd;
+      background-color: #499472;
+      color: white;
+      font-size: 10px;
     }
 
-    td {
-      padding: 0;
+    .header-title {
+      font-size: 14px;
+      font-weight: bold;
     }
 
-    .nav {
-      color: #000;
+    .sub-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin: 2px 0;
+    }
+
+    .footer-images {
       text-align: center;
-      margin-bottom: 15px;
-      padding: 0px 0;
-    }
-
-    .nav p{
-      margin-top: 0px;
-    }
-
-    .cabecalho {
-      text-align: center;
-      margin-top: 5px;
-    }
-
-    .cabecalho p{
-      margin-bottom: 5px;
-    }
-
-    .logos {
-      margin-top: 60px;
-      text-align: center;
-    }
-
-    .logos img {
-      height: 55px;
-      margin: 0 25px;
-    }
-
-    .rodape {
-      justify-content: first baseline;
       margin-top: 20px;
-      height: 150px;
     }
 
-    .rodape div {
-      justify-content: space-between;
-      text-align: center;
-      flex-direction: row !important;
-      padding: 10px;
-    }
-
-    .rodape div img {
-      max-width: 100px;
-    }
-
-    .table-responsive {
-      overflow: hidden;
-    }
-
-    thead {
-      display: table-header-group;
-    }
-
-    tfoot {
-      display: table-row-group;
-    }
-
-    tr {
-      page-break-inside: avoid;
-    }
-
-    td:first-child {
-      max-width: 120px;
-      word-wrap: break-word;
-      white-space: normal;
+    .footer-images img,
+    .header-image {
+      max-width: 130px;
+      display: inline-block;
+      margin: 12 10px;
     }
   </style>
-
-  <link rel="stylesheet" href="../boostrap/CSS/bootstrap.min.css">
 </head>
 
 <body>
 
-  <div class="cabecalho">
-    <img src="<?= $imgCearaCientifico ?>" alt="Ceará Científico" class="img-fluid" style="height: 80px;">
-    <p><b>ETAPA REGIONAL - 2025</b></p>
+  <div class="text-center">
+    <img src="<?= $imgCearaCientifico ?>" style="height:80px;">
+    <p><b>ETAPA REGIONAL - 2026</b></p>
   </div>
 
-  <nav class="nav">
-    <div style="font-size: 15px;">
-      <p><b>PLANILHA DE AVALIAÇÃO DE <?= $userName ?></b></p>
-    </div>
-  </nav>
+  <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
+    <div class="header-title">RELATÓRIO POR ESCOLA</div>
+    <div class="sub-title">ESCOLA: <?= htmlspecialchars($userName) ?></div>
+  </div>
   <?php
   $sql_jurados = "SELECT DISTINCT j.usuario 
                 FROM Jurados j
@@ -300,10 +240,9 @@ ob_start();
   $stmt_jurados->execute(['id_escola' => $id_escola]);
   $jurados = $stmt_jurados->fetchAll(PDO::FETCH_COLUMN);
   ?>
-  <div class="container-fluid mb-5">
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead class="table-secondary text-center align-middle" style="font-size: 8px;">
+  <div class="table-container">
+    <table>
+      <thead>
           <tr>
             <th rowspan="2">Título</th>
             <th rowspan="2">Área</th>
@@ -369,15 +308,11 @@ ob_start();
           <?php endforeach; ?>
         </tbody>
       </table>
-    </div>
   </div>
-  <!-- <div class="logos">
-
-    <img src=<?= $imgCrede7 ?>>
-
-    <img src=<?= $imgCeara ?>>
-
-  </div> -->
+  <div class="footer-images">
+    <img src="<?= $imgCrede7 ?>">
+    <img src="<?= $imgCeara ?>">
+  </div>
 </body>
 
 </html>

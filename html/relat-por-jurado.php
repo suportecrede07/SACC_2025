@@ -105,9 +105,60 @@ ob_start();
   <style>
     body {
       font-family: Arial, sans-serif;
-      font-size: 12px;
-      margin: 0;
-      padding: 20px;
+      padding: 10px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .table-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+      font-size: 9px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 4px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #499472;
+      color: white;
+      font-size: 10px;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .sub-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin: 2px 0;
+    }
+
+    .footer-images {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .footer-images img,
+    .header-image {
+      max-width: 130px;
+      display: inline-block;
+      margin: 12 10px;
     }
 
     .assinatura {
@@ -115,78 +166,24 @@ ob_start();
       margin-bottom: 40px;
       text-align: center;
     }
-
-    .logos {
-      margin-top: 60px;
-      text-align: center;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .header img {
-      display: block;
-      margin: 0 auto 10px auto;
-      height: 80px;
-    }
-
-    table {
-      width: 95%;
-      margin: 20px auto;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      font-size: 11px;
-      padding: 6px 8px;
-      border: 1px solid #000;
-      text-align: center;
-    }
-    th{
-      background-color: #d1e7dd;
-    }
-
-    th.nota-final,
-    td.nota-final {
-      width: 70px;
-      font-weight: bold;
-    }
-
-    table tbody td {
-      word-wrap: break-word;
-      word-break: break-word;
-    }
-
-    .logos img {
-      height: 70px;
-      margin: 0 25px;
-    }
-
-    p {
-      word-break: break-all;
-    }
-
-    .page-number {
-      text-align: center;
-      font-size: 10px;
-    }
   </style>
 </head>
 
 <body>
 
-  <div class="header">
-    <img src="<?= $logo1 ?>" alt="Logo" style="height: 80px;"><br>
-    <strong>ETAPA REGIONAL - 2025</strong><br><br>
-    <strong>PLANILHA DE AVALIAÇÃO POR JURADO</strong><br>
-    <strong>JURADO: <?= htmlspecialchars($jurado['nome']) ?></strong>
+  <div class="text-center">
+    <img src="<?= $logo1 ?>" style="height:80px;">
+    <p><b>ETAPA REGIONAL - 2026</b></p>
   </div>
 
-  <table>
-    <thead>
+  <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
+    <div class="header-title">PLANILHA DE AVALIAÇÃO POR JURADO</div>
+    <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome']) ?></div>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
       <tr>
         <th>Escola</th>
         <th>Título</th>
@@ -216,7 +213,9 @@ ob_start();
         </tr>
       <?php endforeach; ?>
     </tbody>
+    </tbody>
   </table>
+  </div>
 
     <div class="assinatura">
       <hr style="width: 40%;">
@@ -224,10 +223,10 @@ ob_start();
     </div>
 
 
-  <!-- <div class="logos">
+  <div class="footer-images">
     <img src="<?= $logo2 ?>" alt="CREDE">
     <img src="<?= $logo3 ?>" alt="CEARÁ">
-  </div> -->
+  </div>
 
 </body>
 

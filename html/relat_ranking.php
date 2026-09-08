@@ -229,110 +229,82 @@ ob_start();
 <head>
   <meta charset="utf-8">
   <title>Relatório Ranking Geral</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="../boostrap/CSS/bootstrap.min.css">
-</head>
-
-<body>
   <style>
-    table {
-      width: 90%;
-      border-collapse: collapse;
+    body {
       font-family: Arial, sans-serif;
-      margin-left: 5%;
+      padding: 10px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .table-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+      font-size: 9px;
+      width: 100%;
+      max-width: 1200px;
     }
 
     th,
     td {
-      border: 1px solid #1e1d1dff;
-      padding: 8px;
+      border: 1px solid #000;
+      padding: 4px;
       text-align: center;
     }
 
     th {
-      background-color: #d1e7dd;
+      background-color: #499472;
+      color: white;
+      font-size: 10px;
     }
 
-    h2 {
+    .header-title {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .sub-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin: 2px 0;
+    }
+
+    .footer-images {
       text-align: center;
+      margin-top: 20px;
     }
 
-    .criterio1 {
-      font-size: 17px;
-      background-color: rgb(207, 205, 205);
-      width: 5%;
-    }
-
-    .criterio {
-      font-size: 17px;
-      background-color: rgb(207, 205, 205);
-      width: 18%;
-    }
-
-    .d-flex {
-      width: 90%;
-      margin-left: 5%;
-    }
-
-
-    .logo {
-      width: 90%;
-      border: 1px solid #404040;
-      margin-left: 5%;
-      background-color: rgb(207, 205, 205);
-    }
-
-    .t1 {
-      font-size: 28px;
-    }
-
-    .t2 {
-      font-size: 20px;
-    }
-
-    .text {
-      text-align: center;
-    }
-
-    .logos {
-      margin-top: 60px;
-      text-align: center;
-    }
-
-    .logos img {
-      margin: 0 25px;
-      height: 60px;
-    }
-
-    .cabecalho {
-      display: flex;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .imgCabecalho {
-      align-items: center;
-      text-align: center;
+    .footer-images img,
+    .header-image {
+      max-width: 130px;
+      display: inline-block;
+      margin: 12 10px;
     }
   </style>
-  <div class="cabecalho">
-    <img src="<?= $imgCearaCientifico ?>" alt="Ceará Científico" class="imgCabecalho" style="height: 80px;">
-    <p class="text"><b>ETAPA REGIONAL - 2025</b></p>
-  </div>
-  <nav class="d-flex flex-column align-items-center bg-success mb-2 ">
-    <div style="font-size: 15px;">
-      <p class="text"><b>RESULTADO FINAL</b></p>
-    </div>
-    <div class="categoria_area" style="font-size: 12px;">
-      <p><b>Categoria: </b> <?= htmlspecialchars($categoriaNome) ?></p>
-      <p><b>Área: </b><?= htmlspecialchars($areaNome) ?></p>
-    </div>
-  </nav>
+</head>
 
-  <div class="container-fluid mb-5">
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead class="table-secondary text-center align-middle" style="font-size: 8px;">
+<body>
+  <div class="text-center">
+    <img src="<?= $imgCearaCientifico ?>" style="height:80px;">
+    <p><b>ETAPA REGIONAL - 2026</b></p>
+  </div>
+
+  <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
+    <div class="header-title">RESULTADO FINAL (RANKING)</div>
+    <div class="sub-title">CATEGORIA: <?= htmlspecialchars($categoriaNome) ?></div>
+    <div class="sub-title">ÁREA: <?= htmlspecialchars($areaNome) ?></div>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
           <tr>
             <th>Classificação</th>
             <th>Escola</th>
@@ -392,14 +364,12 @@ ob_start();
               </tr>
             <?php endforeach; ?>
         </tbody>
-        </tbody>
-      </table>
-    </div>
+    </table>
   </div>
-  <!-- <div class="logos">
-    <img src=<?= $imgCrede7 ?>>
-    <img src=<?= $imgCeara ?>>
-  </div> -->
+  <div class="footer-images">
+    <img src="<?= $imgCrede7 ?>">
+    <img src="<?= $imgCeara ?>">
+  </div>
 </body>
 
 </html>

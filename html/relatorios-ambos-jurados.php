@@ -19,7 +19,8 @@ function toBase64Image($path)
 // Imagens
 $imgCearaCientifico = toBase64Image('../assets/img/crede-ceara-cientifico-estado.png');
 
-$imgLogo = toBase64Image('../assets/img/b76f995f-d85d-4d51-bf6b-47dd645dad78.png');
+$imgCrede7 = toBase64Image('../assets/img/crede7.png');
+$imgCeara = toBase64Image('../assets/img/ceara.png');
 
 // Mapas de critérios e pesos
 $mapa_criterios = [
@@ -166,6 +167,8 @@ ob_start();
 
     th {
       background-color: #499472;
+      color: white;
+      font-size: 10px;
     }
 
     .header-title {
@@ -180,9 +183,7 @@ ob_start();
     }
 
     .footer-images {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
+      text-align: center;
       margin-top: 20px;
     }
 
@@ -190,7 +191,7 @@ ob_start();
     .header-image {
       max-width: 130px;
       display: inline-block;
-      margin: 0 10px;
+      margin: 12 10px;
     }
   </style>
 
@@ -267,7 +268,8 @@ ob_start();
   </div>
 
   <div class="footer-images">
-    <?php if ($imgLogo): ?><img src="<?= $imgLogo ?>"><?php endif; ?>
+    <img src="<?= $imgCrede7 ?>">
+    <img src="<?= $imgCeara ?>">
   </div>
 </body>
 
