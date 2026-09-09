@@ -187,12 +187,23 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                   <option value="1">Focalizado</option>
                 </select>
 
+                <label for="instituicao-IDEB" class="form-label mt-2">IDEB</label>
+                <select id="instituicao-IDEB" class="form-control">
+                  <option selected disabled>Insira...</option>
+                  <option value="1">IDEB</option>
+                </select>
+
                 <div id="campo-ide" style="display:none;">
                   <label for="instituicao-ide" class="form-label mt-2">IDE Médio da Escola</label>
                   <select id="instituicao-ide" class="form-control" name="ide">
                     <option selected disabled>Selecione...</option>
                     <option value="1">Sim</option>
                   </select>
+                </div>
+
+                <div id="campo-IDEB" style="display: none;">
+                  <label for="instituação-digitação" class="form-label mt-2">Digite o IDEB</label>
+                  <input type="number" style="display: flex; width: 460px;" step="0.1" name="IDEB">
                 </div>
 
                 <input type="submit" value="Enviar" class="btn btn-success mt-3">
@@ -754,8 +765,10 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
     });
     $('#instituicao-tipo').change(function() {
       ($(this).val() === '1') ? $('#campo-ide').slideDown(): $('#campo-ide').slideUp();
+    }); 
+    $('#instituicao-IDEB').change(function() {
+      ($(this).val() === '1') ? $('#campo-IDEB').slideDown(): $('#campo-IDEB').slideUp();
     });
-
     $('#trabalho-categoria').change(function() {
       var categoria = $(this).val();
       if (categoria === '1' || categoria === '2') {

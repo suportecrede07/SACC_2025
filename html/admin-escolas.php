@@ -58,6 +58,7 @@ $result = $pdo -> query($sql);
        <th class="th">Município</th>
        <th class="th">Tipo</th>
        <th class="th">IDE Médio</th>
+       <th class="th">IDEB</th>
        <th class="th">Ações</th>
      </tr>
    </thead>
@@ -70,6 +71,7 @@ $result = $pdo -> query($sql);
         echo '<td>' . $user_data['municipio'] . '</td>';
         echo '<td>' . $user_data['focalizada'] . '</td>';
         echo '<td>' . $user_data['ide'] . '</td>';
+        echo '<td>' . $user_data['IDEB'] . '</td>';
         echo '<td>'; 
         echo '<a href="../php/Editaescolas.php?id=' . $user_data['id_escolas'] . '"><img src="../assets/img/editar.png" alt="Editar"></a>';
         echo '<a href="../php/Excluirescolas.php?id=' . $user_data['id_escolas'] . '"><img src="../assets/img/deletar.png" alt="Deletar"></a>';
