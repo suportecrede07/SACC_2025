@@ -24,6 +24,8 @@ $sql = "SELECT t.id_trabalhos,
   e.nome AS escola,
    e.focalizada,
     e.ide,
+      e.IDEB,
+        e.total_trabalhos,
      c.nome_categoria AS categoria,
       a.nome_area AS area 
         FROM Trabalhos t 
@@ -136,6 +138,8 @@ foreach ($trabalhos as $row) {
     'escola' => $row['escola'],
     'focalizada' => strtolower($row['focalizada'] ?? '') === 'focalizada',
     'ide' => strtolower($row['ide'] ?? '') === 'sim',
+    'IDEB' => $row['IDEB'],
+    'total_trabalhos' => $row['total_trabalhos'],
     'categoria' => $row['categoria'],
     'area' => $row['area'],
     'nota_final' => $notaFinal,
@@ -143,6 +147,8 @@ foreach ($trabalhos as $row) {
     'criterio_desempate' => null,
   ];
 }
+
+
 
 function comparaTrabalhos($a, $b, $criteriosDesempate)
 {
@@ -156,11 +162,21 @@ function comparaTrabalhos($a, $b, $criteriosDesempate)
     if ($notaA < $notaB) return 1;
   }
 
+  if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
+  if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
+
+  if ($a['IDEB'] > $b['IDEB']) return -1;
+  if ($a['IDEB'] < $b['IDEB']) return 1;
+
+  /*
+
   if ($a['focalizada'] && !$b['focalizada']) return -1;
   if (!$a['focalizada'] && $b['focalizada']) return 1;
 
   if ($a['ide'] && !$b['ide']) return -1;
   if (!$a['ide'] && $b['ide']) return 1;
+  */
+
 
   return 0;
 }
