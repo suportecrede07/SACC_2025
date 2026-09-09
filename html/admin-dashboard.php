@@ -626,12 +626,20 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                 if ($notaA > $notaB) return -1;
                 if ($notaA < $notaB) return 1;
               }
+              
+              if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
+              if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
 
+              if ($a['IDEB'] > $b['IDEB']) return -1;
+              if ($a['IDEB'] < $b['IDEB']) return 1;
+
+              /*
               if ($a['focalizada'] && !$b['focalizada']) return -1;
               if (!$a['focalizada'] && $b['focalizada']) return 1;
 
               if ($a['ide'] && !$b['ide']) return -1;
               if (!$a['ide'] && $b['ide']) return 1;
+              */
 
               return 0;
             }
