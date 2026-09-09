@@ -112,7 +112,20 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     Avaliar
                   </button>
                 <?php else: ?>
-                  <span class="text-success">Avaliado</span>
+                  <div class="d-flex flex-column align-items-start gap-1">
+                    <span class="badge bg-success" style="font-size: 0.9em;">Avaliado</span>
+                    <button
+                      class="btn btn-warning abrir-modal-editar"
+                      data-bs-toggle="modal"
+                      data-bs-target="#avaliarModal"
+                    data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
+                    data-escola="<?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?>"
+                    data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
+                    data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
+                    data-id="<?= $trabalho['id_trabalhos'] ?>">
+                    Editar Nota
+                    </button>
+                  </div>
                 <?php endif; ?>
               </td>
             </tr>
@@ -337,11 +350,59 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     });
 
     $('.abrir-modal-avaliacao').on('click', function() {
+      $('#avaliarModalLabel').text('Avaliação do Trabalho');
+      $('#formAvaliacao').attr('action', '../php/SalvarAvaliacao.php');
       $('#modalTitulo').text($(this).data('titulo'));
       $('#modalEscola').text($(this).data('escola'));
       $('#modalCategoria').text($(this).data('categoria'));
       $('#modalArea').text($(this).data('area'));
       $('#id_trabalho').val($(this).data('id'));
+      
+      // Limpar campos
+      $('#formAvaliacao').find('input.nota-auto').val('');
+      $('#formAvaliacao').find('textarea').val('');
+      $('#formAvaliacao').find('input.nota-auto').removeClass('is-invalid');
+    });
+
+    $('.abrir-modal-editar').on('click', function() {
+      $('#avaliarModalLabel').text('Editar Avaliação do Trabalho');
+      $('#formAvaliacao').attr('action', '../php/EditarAvaliacao.php'); // Ação mudada para a rota de edição
+      $('#modalTitulo').text($(this).data('titulo'));
+      $('#modalEscola').text($(this).data('escola'));
+      $('#modalCategoria').text($(this).data('categoria'));
+      $('#modalArea').text($(this).data('area'));
+      
+      let idTrabalho = $(this).data('id');
+      $('#id_trabalho').val(idTrabalho);
+
+      // Limpar campos para esperar o carregamento
+      $('#formAvaliacao').find('input.nota-auto').val('Carregando...').removeClass('is-invalid');
+      $('#formAvaliacao').find('textarea').val('');
+
+      // Fazer a requisição AJAX para buscar as notas anteriores (Endpoint necessário no backend)
+      $.ajax({
+        url: '../php/BuscarAvaliacao.php', // Endpoint a ser criado por você
+        type: 'GET',
+        data: { id_trabalho: idTrabalho },
+        dataType: 'json',
+        success: function(response) {
+          // Exemplo: iterar pelos critérios de 1 a 9 e preencher
+          // Espera-se que `response` seja um objeto: { criterio1: {nota: 10, comentario: ""}, criterio2: ... }
+          for (let i = 1; i <= 9; i++) {
+            let criterioData = response['criterio' + i];
+            if (criterioData) {
+              $('input[name="criterio' + i + '"]').val(criterioData.nota.replace('.', ','));
+              $('textarea[name="comentario' + i + '"]').val(criterioData.comentario);
+            } else {
+              $('input[name="criterio' + i + '"]').val('');
+            }
+          }
+        },
+        error: function() {
+          alert('Erro ao carregar as notas anteriores.');
+          $('#formAvaliacao').find('input.nota-auto').val('');
+        }
+      });
     });
   </script>
 </body>
