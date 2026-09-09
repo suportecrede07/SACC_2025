@@ -1,12 +1,14 @@
 <?php
+
 require_once '../php/Connect.php';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
-    
+    $id = $_POST['id'] ?? null;
     $nome = $_POST['nome'] ?? '';
     $focalizado = ['1' => 'Focalizada'];
     $idFocalizado = $_POST['focalizada'] ?? null;
     $focalizado = $focalizado[$idFocalizado] ?? null;
+    $IDEB = $_POST['IDEB'] ?? null;
     $ide = ['1' => 'Sim'];
     $idIde = $_POST['ide'] ?? null;
     $ide = $ide[$idIde] ?? null;
@@ -14,16 +16,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $idMunicipio = $_POST['municipio'] ?? null;
     $municipio = $municipio[$idMunicipio] ?? 'Desconhecido';
 
-    if(empty($nome)){
-        die('Nome da escola é obrigatório!');
+    if(empty($id) || empty($nome)){
+        die('ID e Nome da escola são obrigatórios!');
     }
 
-    $stmt = $pdo -> prepare("INSERT INTO Escolas (nome, focalizada, ide, municipio) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo -> prepare("UPDATE Escolas SET nome = ?, focalizada = ?, ide = ?, municipio = ?, IDEB = ? WHERE id_escolas = ?");
     try{
-        $stmt -> execute([$nome,$focalizado,$ide,$municipio]);
-        header('Location: ../html/admin-dashboard.php?msg=sucesso');
+        $stmt -> execute([$nome,$focalizado,$ide,$municipio,$id, $IDEB]);
+        header('Location: ../html/admin-escolas.php?msg=atualizado');
         exit();
     }catch(PDOException $e){
-        die('Erro ao cadastrar escola' . $e -> getMessage());
+        die('Erro ao atualizar escola' . $e -> getMessage());
     }
+} else {
+    die('Método inválido');
 }
+?>
