@@ -203,7 +203,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
 
                 <div id="campo-IDEB" style="display: none;">
                   <label for="instituação-digitação" class="form-label mt-2">Digite o IDEB</label>
-                  <input type="number" style="display: flex; width: 460px;" step="0.1" name="IDEB">
+                  <input type="number" class="form-control" style="display: flex" step="0.1" name="IDEB">
                 </div>
 
                 <input type="submit" value="Enviar" class="btn btn-success mt-3">
@@ -626,7 +626,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                 if ($notaA > $notaB) return -1;
                 if ($notaA < $notaB) return 1;
               }
-              
+
               if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
               if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
 
