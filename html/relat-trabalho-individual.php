@@ -93,15 +93,23 @@ ob_start();
             font-size: 12px;
         }
 
-        .info-header {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px 30px;
-            margin-bottom: 25px;
+        .text-center {
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .sub-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin: 2px 0;
         }
 
         table thead th {
-            background-color: #4CAF50;
+            background-color: #499472;
             color: white;
             font-weight: 700;
             padding: 10px;
@@ -123,36 +131,32 @@ ob_start();
             border-collapse: collapse;
         }
 
-        .center {
+        .footer-images {
             text-align: center;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
-        .footer-logos {
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .footer-logos img {
-            width: 120px;
-            margin: 0 25px;
+        .footer-images img,
+        .header-image {
+            max-width: 130px;
             display: inline-block;
-            vertical-align: middle;
+            margin: 12px 10px;
         }
     </style>
 </head>
 
 <body>
-    <div class="center">
+    <div class="text-center">
         <img src="<?= $imgCearaCientifico ?>" style="height: 80px;"><br>
-        <b>ETAPA REGIONAL - 2025</b>
+        <p><b>ETAPA REGIONAL - 2026</b></p>
     </div>
 
-    <div class="info-header">
-        <div><strong>TÍTULO:</strong> <span></span><?= htmlspecialchars($trabalho['titulo']) ?></span></div>
-        <div><strong>CATEGORIA:</strong> </span><?= htmlspecialchars($trabalho['categoria']) ?></span></div>
-        <div><strong>ESCOLA:</strong> <span><?= htmlspecialchars($trabalho['escola']) ?></span></div>
-        <div><strong>ÁREA:</strong> <span><?= htmlspecialchars($trabalho['area']) ?></span></div>
+    <div class="text-center" style="background-color:#198754; color:#fff; padding:6px; margin-bottom: 25px;">
+        <div class="header-title">RELATÓRIO INDIVIDUAL DE AVALIAÇÃO</div>
+        <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome']) ?></div>
+        <div class="sub-title">TÍTULO: <?= htmlspecialchars($trabalho['titulo']) ?></div>
+        <div class="sub-title">ESCOLA: <?= htmlspecialchars($trabalho['escola']) ?></div>
+        <div class="sub-title">CATEGORIA: <?= htmlspecialchars($trabalho['categoria']) ?> | ÁREA: <?= htmlspecialchars($trabalho['area']) ?></div>
     </div>
 
     <table>
@@ -174,10 +178,10 @@ ob_start();
         </tbody>
     </table>
 
-    <!-- <div class="footer-logos">
-        <img src="<?= $imgCrede7 ?>" alt="CREDE 7" />
-        <img src="<?= $imgCeara ?>" alt="Governo do Ceará" />
-    </div> -->
+    <div class="footer-images">
+        <img src="<?= $imgCrede7 ?>">
+        <img src="<?= $imgCeara ?>">
+    </div>
 
 </body>
 
