@@ -102,6 +102,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php if ($trabalho['avaliacao_existente'] == 0): ?>
                   <button
                     class="btn btn-success abrir-modal-avaliacao"
+                    style="width: 120px; font-weight: 500;"
                     data-bs-toggle="modal"
                     data-bs-target="#avaliarModal"
                     data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
@@ -112,10 +113,13 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     Avaliar
                   </button>
                 <?php else: ?>
-                  <div class="d-flex flex-column align-items-start gap-1">
-                    <span class="badge bg-success" style="font-size: 0.9em;">Avaliado</span>
+                  <div class="d-flex flex-column align-items-center gap-2">
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; cursor: default; width: 120px; padding: 6px 12px; border-radius: 6px; font-weight: 500; text-align: center;">
+                      Avaliado
+                    </div>
                     <button
-                      class="btn btn-warning abrir-modal-editar"
+                      class="btn btn-success abrir-modal-editar d-flex align-items-center justify-content-center"
+                      style="width: 120px; font-weight: 500;"
                       data-bs-toggle="modal"
                       data-bs-target="#avaliarModal"
                       data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
@@ -123,7 +127,10 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                       data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
                       data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
                       data-id="<?= $trabalho['id_trabalhos'] ?>">
-                    Editar Nota
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16" style="margin-right: 6px;">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                      </svg>
+                      Editar
                     </button>
                   </div>
                 <?php endif; ?>
