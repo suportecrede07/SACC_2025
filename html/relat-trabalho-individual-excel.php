@@ -61,49 +61,66 @@ $criterios = [
 
 $avaliacoesIndexadas = [];
 foreach ($avaliacoes as $av) {
-    foreach ($criterios as $num => $nome) {
-        if (trim($av['criterio']) === trim($nome)) {
-            $avaliacoesIndexadas[$num] = $av;
-            break;
-        }
-    }
+    $avaliacoesIndexadas[$av['criterio']] = $av;
 }
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
 
-$sheet->setCellValue('A1', 'Relatório de Avaliação de Trabalho');
-$sheet->mergeCells('A1:D1');
-$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+$sheet->setCellValue('A1', 'RELATÓRIO INDIVIDUAL DE AVALIAÇÃO');
+$sheet->mergeCells('A1:C1');
+$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16)->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE);
+$sheet->getStyle('A1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF198754');
+$sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+$sheet->getRowDimension(1)->setRowHeight(30);
 
-$sheet->setCellValue('A3', 'Título:');
-$sheet->setCellValue('B3', $trabalho['titulo']);
-$sheet->setCellValue('A4', 'Categoria:');
-$sheet->setCellValue('B4', $trabalho['categoria']);
-$sheet->setCellValue('A5', 'Escola:');
+$sheet->setCellValue('A3', 'JURADO:');
+$sheet->setCellValue('B3', $jurado['nome']);
+$sheet->setCellValue('A4', 'TÍTULO:');
+$sheet->setCellValue('B4', $trabalho['titulo']);
+$sheet->setCellValue('A5', 'ESCOLA:');
 $sheet->setCellValue('B5', $trabalho['escola']);
-$sheet->setCellValue('A6', 'Área:');
-$sheet->setCellValue('B6', $trabalho['area']);
-$sheet->setCellValue('A7', 'Jurado:');
-$sheet->setCellValue('B7', $jurado['nome']);
+$sheet->setCellValue('A6', 'CATEGORIA:');
+$sheet->setCellValue('B6', $trabalho['categoria'] . ' | ÁREA: ' . $trabalho['area']);
 
-$sheet->setCellValue('A9', 'Critério');
-$sheet->setCellValue('B9', 'Nota');
-$sheet->setCellValue('C9', 'Comentário');
+$sheet->getStyle('A3:A6')->getFont()->setBold(true);
 
-$sheet->getStyle('A9:C9')->getFont()->setBold(true);
-$sheet->getStyle('A9:C9')->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+$sheet->setCellValue('A8', 'Critério');
+$sheet->setCellValue('B8', 'Avaliação');
+$sheet->setCellValue('C8', 'Comentário');
 
-$row = 10;
+$headerStyle = [
+    'font' => ['bold' => true, 'color' => ['argb' => \PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE]],
+    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF499472']],
+    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT],
+    'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]]
+];
+$sheet->getStyle('A8:C8')->applyFromArray($headerStyle);
+
+$row = 9;
 foreach ($criterios as $num => $nome) {
     $sheet->setCellValue("A$row", $nome);
-    $sheet->setCellValue("B$row", isset($avaliacoesIndexadas[$num]) ? $avaliacoesIndexadas[$num]['nota'] : '');
+    $nota = isset($avaliacoesIndexadas[$num]) ? number_format((float)$avaliacoesIndexadas[$num]['nota'], 2, ',', '.') : '';
+    $sheet->setCellValue("B$row", $nota);
     $sheet->setCellValue("C$row", isset($avaliacoesIndexadas[$num]) ? $avaliacoesIndexadas[$num]['comentario'] : '');
+    
+    $sheet->getStyle("A$row:C$row")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+    $sheet->getStyle("A$row")->getAlignment()->setWrapText(true);
+    $sheet->getStyle("C$row")->getAlignment()->setWrapText(true);
+    $sheet->getStyle("B$row")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle("B$row")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
     $row++;
 }
 
 foreach (range('A', 'C') as $col) {
-    $sheet->getColumnDimension($col)->setAutoSize(true);
+    if ($col === 'A') {
+        $sheet->getColumnDimension($col)->setWidth(45);
+    } elseif ($col === 'C') {
+        $sheet->getColumnDimension($col)->setWidth(55);
+    } else {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    }
 }
 
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
