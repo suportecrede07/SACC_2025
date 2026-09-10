@@ -28,7 +28,7 @@ $stmt = $pdo->prepare("
     a.nome_area,
     (
       SELECT COUNT(*) 
-      FROM Avaliacoes av 
+      FROM avaliacoes av 
       WHERE av.id_trabalho = t.id_trabalhos 
         AND av.id_jurado = jt.id_jurado
     ) AS avaliacao_existente
@@ -118,11 +118,11 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                       class="btn btn-warning abrir-modal-editar"
                       data-bs-toggle="modal"
                       data-bs-target="#avaliarModal"
-                    data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
-                    data-escola="<?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?>"
-                    data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
-                    data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
-                    data-id="<?= $trabalho['id_trabalhos'] ?>">
+                      data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
+                      data-escola="<?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?>"
+                      data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
+                      data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
+                      data-id="<?= $trabalho['id_trabalhos'] ?>">
                     Editar Nota
                     </button>
                   </div>
@@ -135,7 +135,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </table>
   </main>
 
-  <!-- Modal Avaliar -->
+  <!-- Modal Avaliar/Editar -->
   <div class="modal fade" id="avaliarModal" tabindex="-1" aria-labelledby="avaliarModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
@@ -152,27 +152,26 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
               <div class="d-flex align-items-start" style="min-width: 100%;">
                 <strong class="me-2" style="min-width: 80px;">Titulo:</strong>
-                <span id="modalTitulo" class="text-break"><?= htmlspecialchars($trabalho['titulo']) ?></span>
+                <span id="modalTitulo" class="text-break"></span>
               </div>
 
               <div class="d-flex align-items-start" style="min-width: 100%;">
                 <strong class="me-2" style="min-width: 80px;">Escola:</strong>
-                <span id="modalEscola" class="text-break"><?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?></span>
+                <span id="modalEscola" class="text-break"></span>
               </div>
 
               <div class="d-flex align-items-start" style="min-width: 100%;">
                 <strong class="me-2" style="min-width: 80px;">Categoria:</strong>
-                <span id="modalCategoria" class="text-break"><?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?></span>
+                <span id="modalCategoria" class="text-break"></span>
               </div>
 
               <div class="d-flex align-items-start" style="min-width: 100%;">
                 <strong class="me-2" style="min-width: 80px;">Área:</strong>
-                <span id="modalArea" class="text-break"><?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?></span>
+                <span id="modalArea" class="text-break"></span>
               </div>
 
               </p>
             </div>
-
 
             <form id="formAvaliacao" action="../php/SalvarAvaliacao.php" method="post">
               <input type="hidden" name="id_trabalho" id="id_trabalho" value="" />
@@ -202,7 +201,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><textarea class="form-control" name="comentario3" cols="50" style="max-height: 30px; border: 1px solid;"></textarea></td>
                   </tr>
                   <tr>
-                    <td><b>Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática: o conhecimento a serviço da vida coletiva</b></td>
+                    <td><b>Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática</b></td>
                     <td style="width: 100px;"><input type="text" inputmode="numeric" class="form-control nota-auto" name="criterio4" maxlength="5" style="border: 1px solid;" required /></td>
                     <td><textarea class="form-control" name="comentario4" cols="50" style="max-height: 30px; border: 1px solid;"></textarea></td>
                   </tr>
@@ -236,24 +235,26 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
               <div class="d-flex justify-content-between mt-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-                <button type="button" class="btn btn-success" id="btnAbrirConfirmacao">Finalizar Avaliação</button>
+                <button type="button" class="btn btn-success" id="btnAbrirConfirmacao">Salvar Avaliação</button>
               </div>
+              
+              <!-- Modal Interno Confirmação -->
               <div class="modal fade" id="confirmarEnvioModal" tabindex="-1" aria-labelledby="confirmarEnvioModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
 
                     <div class="modal-header">
-                      <h5 class="modal-title" id="confirmarEnvioModalLabel">Confirmar Avaliação</h5>
+                      <h5 class="modal-title" id="confirmarEnvioModalLabel">Confirmar Ação</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
 
-                    <div class="modal-body">
-                      Tem certeza que deseja finalizar a avaliação? Você não poderá alterar depois.
+                    <div class="modal-body" id="textoConfirmacao">
+                      Tem certeza que deseja salvar esta avaliação?
                     </div>
 
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                      <button type="button" class="btn btn-success" id="confirmarEnvioBtn">Sim, finalizar</button>
+                      <button type="button" class="btn btn-success" id="confirmarEnvioBtn">Sim, salvar</button>
                     </div>
 
                   </div>
@@ -287,7 +288,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         input.addEventListener('blur', () => {
           let valor = input.value.trim();
-
+          if (valor === 'Carregando...') return; // Ignora se estiver carregando do BD
           if (valor === '') {
             input.value = '0,00';
             input.classList.remove('is-invalid');
@@ -349,9 +350,12 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
       });
     });
 
+    // Função Nova Avaliação
     $('.abrir-modal-avaliacao').on('click', function() {
       $('#avaliarModalLabel').text('Avaliação do Trabalho');
       $('#formAvaliacao').attr('action', '../php/SalvarAvaliacao.php');
+      $('#textoConfirmacao').text('Tem certeza que deseja salvar esta avaliação? Você não poderá alterar depois sem clicar em Editar.');
+      
       $('#modalTitulo').text($(this).data('titulo'));
       $('#modalEscola').text($(this).data('escola'));
       $('#modalCategoria').text($(this).data('categoria'));
@@ -364,9 +368,12 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
       $('#formAvaliacao').find('input.nota-auto').removeClass('is-invalid');
     });
 
+    // Função Editar Avaliação Existente
     $('.abrir-modal-editar').on('click', function() {
       $('#avaliarModalLabel').text('Editar Avaliação do Trabalho');
-      $('#formAvaliacao').attr('action', '../php/EditarAvaliacao.php'); // Ação mudada para a rota de edição
+      $('#formAvaliacao').attr('action', '../php/EditarAvaliacao.php'); 
+      $('#textoConfirmacao').text('Tem certeza que deseja salvar as alterações nas notas e comentários?');
+      
       $('#modalTitulo').text($(this).data('titulo'));
       $('#modalEscola').text($(this).data('escola'));
       $('#modalCategoria').text($(this).data('categoria'));
@@ -375,36 +382,37 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
       let idTrabalho = $(this).data('id');
       $('#id_trabalho').val(idTrabalho);
 
-      // Limpar campos para esperar o carregamento
       $('#formAvaliacao').find('input.nota-auto').val('Carregando...').removeClass('is-invalid');
       $('#formAvaliacao').find('textarea').val('');
 
-      // Fazer a requisição AJAX para buscar as notas anteriores (Endpoint necessário no backend)
       $.ajax({
-        url: '../php/BuscarAvaliacao.php', // Endpoint a ser criado por você
+        url: '../php/BuscarAvaliacao.php', 
         type: 'GET',
         data: { id_trabalho: idTrabalho },
         dataType: 'json',
         success: function(response) {
-          // Exemplo: iterar pelos critérios de 1 a 9 e preencher
-          // Espera-se que `response` seja um objeto: { criterio1: {nota: 10, comentario: ""}, criterio2: ... }
+          if (response.error) {
+              alert(response.error);
+              return;
+          }
           for (let i = 1; i <= 9; i++) {
             let criterioData = response['criterio' + i];
             if (criterioData) {
-              $('input[name="criterio' + i + '"]').val(criterioData.nota.replace('.', ','));
+              // Convertendo ponto (banco de dados) para vírgula (input mask)
+              let notaFormatada = parseFloat(criterioData.nota).toFixed(2).replace('.', ',');
+              $('input[name="criterio' + i + '"]').val(notaFormatada);
               $('textarea[name="comentario' + i + '"]').val(criterioData.comentario);
             } else {
-              $('input[name="criterio' + i + '"]').val('');
+              $('input[name="criterio' + i + '"]').val('0,00');
             }
           }
         },
         error: function() {
-          alert('Erro ao carregar as notas anteriores.');
+          alert('Erro ao carregar as notas anteriores. Tente novamente.');
           $('#formAvaliacao').find('input.nota-auto').val('');
         }
       });
     });
   </script>
 </body>
-
 </html>
