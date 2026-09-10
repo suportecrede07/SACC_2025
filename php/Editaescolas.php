@@ -66,6 +66,11 @@ if (!$escola) {
             <option value="1" <?= ($escola['ide'] === 'Sim') ? 'selected' : '' ?>>Sim</option>
         </select>
 
+        <div id="campo-IDEB">
+            <label for="instituação-digitação" class="form-label mt-2">Digite o IDEB</label>
+            <input type="number" class="form-control" style="display: flex" step="0.1" value="<?= htmlspecialchars($escola['IDEB']) ?>" name="IDEB">
+        </div>
+
         <input type="submit" value="Atualizar" class="btn btn-success mt-3">
         <a href="../html/admin-escolas.php" class="btn btn-secondary mt-3">Cancelar</a>
     </form>
