@@ -3,7 +3,7 @@
 require_once '../php/Connect.php';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
-    $id = $_POST['id_escolas'] ?? null;
+    $id = $_POST['id'] ?? null;
     $nome = $_POST['nome'] ?? '';
     $focalizado = ['1' => 'Focalizada'];
     $idFocalizado = $_POST['focalizada'] ?? null;
