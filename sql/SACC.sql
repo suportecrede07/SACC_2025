@@ -31,6 +31,7 @@ CREATE TABLE Escolas (
     nome VARCHAR(45) NOT NULL,
     focalizada VARCHAR(45) NULL,
     ide VARCHAR(45) NULL,
+    ideb DECIMAL(4,2) NULL, 
     municipio VARCHAR(45) NOT NULL
 );
 
