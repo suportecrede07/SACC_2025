@@ -62,7 +62,9 @@ $sql = "SELECT
     t.titulo,
     e.nome AS escola,
     c.nome_categoria,
-    a.nome_area
+    a.nome_area,
+    e.IDEB,
+    e.total_trabalhos
 FROM Trabalhos t
 LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
 LEFT JOIN Jurados j ON t.id_jurados = j.id_jurados
@@ -579,6 +581,8 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                 'escola' => $row['escola'],
                 'focalizada' => $focalizada,
                 'ide' => $ide,
+                'IDEB' => $row['IDEB']?? '-',
+                'total_trabalhos' => $row['total_trabalhos'] ?? '-',
                 'categoria' => $row['categoria'],
                 'area' => $row['area'],
                 'jurados' => [

@@ -138,9 +138,9 @@ foreach ($trabalhos as $row) {
     'escola' => $row['escola'],
     'focalizada' => strtolower($row['focalizada'] ?? '') === 'focalizada',
     'ide' => strtolower($row['ide'] ?? '') === 'sim',
-    'IDEB' => $row['IDEB'],
-    'total_trabalhos' => $row['total_trabalhos'],
-    'categoria' => $row['categoria'],
+    'IDEB' => $row['IDEB'] ?? '-',
+    'total_trabalhos' => $row['total_trabalhos'] ?? '-',
+    'categoria' => $row['categoria'] ?? '-',
     'area' => $row['area'],
     'nota_final' => $notaFinal,
     'criterios' => $criteriosMedios,
@@ -193,6 +193,13 @@ function criterioDesempateUsado($a, $b, $criteriosDesempate)
     }
   }
 
+  if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
+  if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
+
+  if ($a['IDEB'] > $b['IDEB']) return -1;
+  if ($a['IDEB'] < $b['IDEB']) return 1;
+
+  /*
   if ($a['focalizada'] !== $b['focalizada']) {
     return ['indice' => 'Focalizada', 'criterio' => 'Escola focalizada'];
   }
@@ -200,6 +207,7 @@ function criterioDesempateUsado($a, $b, $criteriosDesempate)
   if ($a['ide'] !== $b['ide']) {
     return ['indice' => 'IDE', 'criterio' => 'Escola com IDE'];
   }
+  */
 
   return null;
 }
