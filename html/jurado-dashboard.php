@@ -98,20 +98,22 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
               <td><?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?></td>
               <td><?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?></td>
               <td><?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?></td>
-              <td>
+              <td style="text-align: center; vertical-align: middle;">
                 <?php if ($trabalho['avaliacao_existente'] == 0): ?>
-                  <button
-                    class="btn btn-success abrir-modal-avaliacao"
-                    style="width: 120px; font-weight: 500;"
-                    data-bs-toggle="modal"
-                    data-bs-target="#avaliarModal"
-                    data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
-                    data-escola="<?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?>"
-                    data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
-                    data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
-                    data-id="<?= $trabalho['id_trabalhos'] ?>">
-                    Avaliar
-                  </button>
+                  <div class="d-flex justify-content-center">
+                    <button
+                      class="btn btn-success abrir-modal-avaliacao"
+                      style="width: 120px; font-weight: 500;"
+                      data-bs-toggle="modal"
+                      data-bs-target="#avaliarModal"
+                      data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
+                      data-escola="<?= htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?>"
+                      data-categoria="<?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?>"
+                      data-area="<?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?>"
+                      data-id="<?= $trabalho['id_trabalhos'] ?>">
+                      Avaliar
+                    </button>
+                  </div>
                 <?php else: ?>
                   <div class="d-flex flex-column align-items-center gap-2">
                     <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; cursor: default; width: 120px; padding: 6px 12px; border-radius: 6px; font-weight: 500; text-align: center;">
