@@ -102,8 +102,8 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php if ($trabalho['avaliacao_existente'] == 0): ?>
                   <div class="d-flex justify-content-center">
                     <button
-                      class="btn btn-success abrir-modal-avaliacao"
-                      style="width: 120px; font-weight: 500;"
+                      class="btn abrir-modal-avaliacao text-white"
+                      style="width: 120px; font-weight: 500; background-color: #fd7e14; border-color: #fd7e14;"
                       data-bs-toggle="modal"
                       data-bs-target="#avaliarModal"
                       data-titulo="<?= htmlspecialchars($trabalho['titulo']) ?>"
