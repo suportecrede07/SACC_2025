@@ -77,8 +77,6 @@ $pesos = [
   5 => 2,
   6 => 1,
   7 => 1,
-  8 => 1,
-  9 => 0.5
 ];
 
 $calculaMediaPonderada = function ($notas, $pesos) {
@@ -138,13 +136,13 @@ foreach ($trabalhos as $row) {
     'escola' => $row['escola'],
     'focalizada' => strtolower($row['focalizada'] ?? '') === 'focalizada',
     'ide' => strtolower($row['ide'] ?? '') === 'sim',
-    'IDEB' => $row['IDEB'] ?? '-',
-    'total_trabalhos' => $row['total_trabalhos'] ?? '-',
     'categoria' => $row['categoria'] ?? '-',
     'area' => $row['area'],
     'nota_final' => $notaFinal,
     'criterios' => $criteriosMedios,
     'criterio_desempate' => null,
+    'IDEB' => is_numeric($row['IDEB']) ? (float)$row['IDEB'] : null,
+    'total_trabalhos' => is_numeric($row['total_trabalhos']) ? (int)$row['total_trabalhos'] : 0,
   ];
 }
 
@@ -165,54 +163,41 @@ function comparaTrabalhos($a, $b, $criteriosDesempate)
   if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
   if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
 
-  if ($a['IDEB'] > $b['IDEB']) return -1;
-  if ($a['IDEB'] < $b['IDEB']) return 1;
-
-  /*
-
-  if ($a['focalizada'] && !$b['focalizada']) return -1;
-  if (!$a['focalizada'] && $b['focalizada']) return 1;
-
-  if ($a['ide'] && !$b['ide']) return -1;
-  if (!$a['ide'] && $b['ide']) return 1;
-  */
-
+  if ($a['IDEB'] < $b['IDEB']) return -1;
+  if ($a['IDEB'] > $b['IDEB']) return 1;
 
   return 0;
 }
+
 function criterioDesempateUsado($a, $b, $criteriosDesempate)
 {
+  // Checa qual dos 7 critérios desempata
   foreach ($criteriosDesempate as $index => $crit) {
     $notaA = $a['criterios'][$crit] ?? 0;
     $notaB = $b['criterios'][$crit] ?? 0;
     if ($notaA != $notaB) {
       return [
         'indice' => $index + 1,
-        'criterio' => "Critério #" . ($index + 1),
+        'criterio' => "Critério #" . ($index + 1), // Vai exibir "Critério #1", "Critério #2", etc.
       ];
     }
   }
 
-  if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
-  if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
-
-  if ($a['IDEB'] > $b['IDEB']) return -1;
-  if ($a['IDEB'] < $b['IDEB']) return 1;
-
-  /*
-  if ($a['focalizada'] !== $b['focalizada']) {
-    return ['indice' => 'Focalizada', 'criterio' => 'Escola focalizada'];
+  // Checa se desempata por Trabalhos Cadastrados
+  if ($a['total_trabalhos'] != $b['total_trabalhos']) {
+      return ['indice' => 'Trabalhos', 'criterio' => 'Maior percentual de trabalhos'];
   }
 
-  if ($a['ide'] !== $b['ide']) {
-    return ['indice' => 'IDE', 'criterio' => 'Escola com IDE'];
+  // Checa se desempata pelo IDEB
+  if ($a['IDEB'] != $b['IDEB']) {
+      return ['indice' => 'IDEB', 'criterio' => 'Menor IDEB'];
   }
-  */
 
   return null;
 }
 
-$criteriosDesempate = range(1, 9);
+// ALTERE AQUI: Use apenas de 1 a 7 para a Regra 8.4.4
+$criteriosDesempate = range(1, 7);
 usort($dados, function ($a, $b) use ($criteriosDesempate) {
   return comparaTrabalhos($a, $b, $criteriosDesempate);
 });
@@ -344,7 +329,7 @@ ob_start();
           $areas = $pdo->query("SELECT id_area, nome_area FROM Areas ORDER BY nome_area")->fetchAll(PDO::FETCH_ASSOC);
           $trabalhos = $pdo->query("SELECT id_trabalhos, titulo FROM Trabalhos ORDER BY titulo")->fetchAll(PDO::FETCH_ASSOC);
 
-          $criteriosDesempate = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+          $criteriosDesempate = [1, 2, 3, 4, 5, 6, 7];
           $sql = "SELECT 
           t.id_trabalhos,
            t.titulo,
