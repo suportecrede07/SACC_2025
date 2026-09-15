@@ -77,6 +77,8 @@ $pesos = [
   5 => 2,
   6 => 1,
   7 => 1,
+  8 => 1,
+  9 => 0.5
 ];
 
 $calculaMediaPonderada = function ($notas, $pesos) {
@@ -115,7 +117,7 @@ foreach ($trabalhos as $row) {
 
   $criteriosMedios = [];
   foreach ($pesos as $idx => $_) {
-    $crit = $idx + 1;
+    $crit = $idx;
     $nota1 = isset($jurados[0]) ? ($notasPorJurado[$jurados[0]][$crit] ?? null) : null;
     $nota2 = isset($jurados[1]) ? ($notasPorJurado[$jurados[1]][$crit] ?? null) : null;
 
