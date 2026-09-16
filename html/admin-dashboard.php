@@ -603,7 +603,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
               ];
 
               foreach ($pesos as $idx => $_) {
-                $crit = $idx + 1;
+                $crit = $idx;
                 $nota1 = isset($jurados[0]) ? ($notasPorJurado[$jurados[0]][$crit] ?? null) : null;
                 $nota2 = isset($jurados[1]) ? ($notasPorJurado[$jurados[1]][$crit] ?? null) : null;
 
