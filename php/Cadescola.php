@@ -9,6 +9,7 @@ $nome = trim($_POST['nome'] ?? '');
 $idFocalizado = $_POST['focalizada'] ?? null;
 $focalizada = ($idFocalizado == '1') ? 'Focalizada' : null;
 $IDEB = $_POST['IDEB'] ?? null;
+$total_trabalhos = $_POST['total_trabalhos'] ?? null;
 $idIde = $_POST['ide'] ?? null;
 $ide = ($idIde == '1') ? 'Sim' : null;
 
@@ -39,7 +40,7 @@ try {
 
     $sql = "INSERT INTO Escolas 
             (nome, focalizada, ide, municipio, IDEB, total_trabalhos)
-            VALUES (?, ?, ?, ?, ?, 0)";
+            VALUES (?, ?, ?, ?, ?, ?)";
 
     $stmt = $pdo->prepare($sql);
 
@@ -48,7 +49,8 @@ try {
         $focalizada,
         $ide,
         $municipio,
-        $IDEB
+        $IDEB,
+        $total_trabalhos
     ]);
 
     header('Location: ../html/admin-dashboard.php?msg=escola_cadastrada');

@@ -71,6 +71,11 @@ if (!$escola) {
             <input type="number" class="form-control" style="display: flex" step="0.1" value="<?= htmlspecialchars($escola['IDEB']) ?>" name="IDEB">
         </div>
 
+        <div id="campo-total_trabalhos">
+            <label for="instituação-digitação" class="form-label mt-2">Digite o numero de trabalhos na etapa escolar</label>
+            <input type="number" class="form-control" style="display: flex" step="0.1" value="<?= htmlspecialchars($escola['total_trabalhos']) ?>" name="total_trabalhos">
+        </div>
+
         <input type="submit" value="Atualizar" class="btn btn-success mt-3">
         <a href="../html/admin-escolas.php" class="btn btn-secondary mt-3">Cancelar</a>
     </form>

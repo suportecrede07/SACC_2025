@@ -199,7 +199,7 @@ function criterioDesempateUsado($a, $b, $criteriosDesempate)
 }
 
 // ALTERE AQUI: Use apenas de 1 a 7 para a Regra 8.4.4
-$criteriosDesempate = range(1, 7);
+$criteriosDesempate = [1,2,4,3,5,6,7];
 usort($dados, function ($a, $b) use ($criteriosDesempate) {
   return comparaTrabalhos($a, $b, $criteriosDesempate);
 });
@@ -308,7 +308,7 @@ ob_start();
   </div>
 
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
-    <div class="header-title">RESULTADO FINAL (RANKING)</div>
+    <div class="header-title">RESULTADO FINAL</div>
     <div class="sub-title">CATEGORIA: <?= htmlspecialchars($categoriaNome) ?></div>
     <div class="sub-title">ÁREA: <?= htmlspecialchars($areaNome) ?></div>
   </div>

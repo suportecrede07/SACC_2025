@@ -12,6 +12,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $idIde = $_POST['ide'] ?? null;
     $ide = $ide[$idIde] ?? null;
     $IDEB = $_POST['IDEB'] ?? null;
+    $total_trabalhos = $_POST['total_trabalhos'] ?? null;
     $municipio = ['1' => 'Caridade', '2' => 'Canindé', '3' => 'Paramoti', '4' => 'General Sampaio', '5' => 'Santa Quitéria', '6' => 'Itatira'];
     $idMunicipio = $_POST['municipio'] ?? null;
     $municipio = $municipio[$idMunicipio] ?? 'Desconhecido';
@@ -20,9 +21,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         die('ID e Nome da escola são obrigatórios!');
     }
 
-    $stmt = $pdo -> prepare("UPDATE Escolas SET nome = ?, focalizada = ?, ide = ?, municipio = ?, IDEB = ? WHERE id_escolas = ?");
+    $stmt = $pdo -> prepare("UPDATE Escolas SET nome = ?, focalizada = ?, ide = ?, municipio = ?, IDEB = ?, total_trabalhos = ? WHERE id_escolas = ?");
     try{
-        $stmt -> execute([$nome,$focalizado,$ide,$municipio,$IDEB,$id]);
+        $stmt -> execute([$nome,$focalizado,$ide,$municipio,$IDEB,$total_trabalhos,$id]);
         header('Location: ../html/admin-escolas.php?msg=atualizado');
         exit();
     }catch(PDOException $e){
