@@ -110,7 +110,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
   <script src="../boostrap/JS/bootstrap.bundle.min.js"></script>
   <link href="../boostrap/CSS/bootstrap-icons.css" rel="stylesheet">
   <script src="../boostrap/JS/jquery.min.js"></script>
-  <link rel="stylesheet" href="../assets/styles/dashboard-admin.css">
+  <link rel="stylesheet" href="../assets/styles/dashboard-admin.css?v=<?= time() ?>">
 </head>
 
 <body>
@@ -118,22 +118,26 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
   <button id="mobile-toggle" onclick="toggleSidebar()">
     <i><img src="../assets/img/menu.png"></i>
   </button>
-  <div id="sidebar" style="background-color: #4C8F5A;">
+  <div id="sidebar">
     <div>
-      <button class="toggle-btn" onclick="toggleSidebar()">
-        <img src="../assets/img/SIMBOLO.png" alt="SAFC">
-        <span class="brand-text">SAFC</span>
-      </button>
+      <div class="sidebar-top">
+        <div class="brand-wrapper">
+          <div class="brand-logo-card">
+            <img src="../assets/img/SIMBOLO.png" alt="SAFC">
+          </div>
+          <span class="brand-title-text">SAFC</span>
+        </div>
+      </div>
       <ul class="nav flex-column">
-        <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.png" class="dashboard"></i> <span
-              class="label-text">Dashboard</span></a></li>
-        <li><a href="admin-escolas.php"><i><img src="../assets/img/escola.png" class="escola"></i> <span
+        <li class="active"><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.svg" class="dashboard"></i> <span
+              class="label-text">Dashboard</span></a></li> 
+        <li><a href="admin-escolas.php"><i><img src="../assets/img/escolas.svg" class="escola"></i> <span
               class="label-text">Escolas</span></a></li>
-        <li><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalho.png" class="trabalho"></i> <span
+        <li><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalhos.svg" class="trabalho"></i> <span
               class="label-text">Trabalhos</span></a></li>
-        <li><a href="admin-jurados.php"><i><img src="../assets/img/Jurados.png" class="jurado"></i> <span
+        <li><a href="admin-jurados.php"><i><img src="../assets/img/jurados.svg" class="jurado"></i> <span
               class="label-text">Jurados</span></a></li>
-        <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorio.png" class="relatorio"></i> <span
+        <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorios.svg" class="relatorio"></i> <span
               class="label-text">Relatórios</span></a></li>
       </ul>
     </div>
@@ -143,20 +147,31 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
     </ul>
   </div>
   <main id="main">
-    <div class="container-fluid">
-      <h2>Dashboard Administrativo</h2>
-      <p class="text-muted">Escolha uma das opções abaixo para realizar cadastros:</p>
-      <div class="row text-center mb-4">
-        <div class="col">
-          <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalInstituicao"
-            style="background-color: #4C8F5A;">Cadastrar Instituição</button>
-          <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalJurado"
-            style="background-color: #4C8F5A;">Cadastrar Jurado</button>
-          <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalTrabalho"
-            style="background-color: #4C8F5A;">Cadastrar Trabalho</button>
-          <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalAssociacao"
-            style="background-color: #4C8F5A;">Associar Jurado</button>
+    <div class="container-fluid p-0">
+      <div class="page-header-clean d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1 class="page-title">Dashboard Administrativo</h1>
+          <p class="page-subtitle">Escolha uma das opções abaixo para realizar cadastros ou acompanhar as métricas em tempo real.</p>
         </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalInstituicao">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Cadastrar Instituição
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalJurado">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+          Cadastrar Jurado
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalTrabalho">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Cadastrar Trabalho
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalAssociacao">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Associar Jurado
+        </button>
       </div>
       <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
         aria-hidden="true">
@@ -421,30 +436,31 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
       </div>
 
 
-      <div class="row stat-row">
-        <div class="col-sm-4">
+      <div class="row g-3 stat-row">
+        <div class="col-md-4">
           <div class="stat-box stat-primary">
-            <i><img src="../assets/img/escola.png" class="escola" style="width: 25px;"></i>
-            <h2 id="total-escolas"><?php echo $total_escolas; ?></h2>
+            <i><img src="../assets/img/escola.png" class="escola" style="width: 28px; height: 28px;"></i>
+            <h2 id="total-escolas" class="mt-2"><?php echo $total_escolas; ?></h2>
             <p>Escolas Cadastradas</p>
           </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-md-4">
           <div class="stat-box stat-primary">
-            <i><img src="../assets/img/trabalho.png" class="trabalho" style="width: 25px;"></i>
-            <h2 id="total-trabalhos"><?php echo $total_trabalhos; ?></h2>
+            <i><img src="../assets/img/trabalho.png" class="trabalho" style="width: 28px; height: 28px;"></i>
+            <h2 id="total-trabalhos" class="mt-2"><?php echo $total_trabalhos; ?></h2>
             <p>Trabalhos Cadastrados</p>
           </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-md-4">
           <div class="stat-box stat-primary">
-            <i><img src="../assets/img/Jurados.png" class="jurado" style="width: 25px;"></i>
-            <h2 id="total-jurados"><?php echo $total_jurados; ?></h2>
+            <i><img src="../assets/img/Jurados.png" class="jurado" style="width: 28px; height: 28px;"></i>
+            <h2 id="total-jurados" class="mt-2"><?php echo $total_jurados; ?></h2>
             <p>Jurados Cadastrados</p>
           </div>
         </div>
       </div>
 
+<<<<<<< Updated upstream
       <div class="row">
         <div class="col-12">
           <div class="ranking-box mt-4">
@@ -744,8 +760,254 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                   } ?>
                 </tbody>
               </table>
+=======
+      <div class="admin-card-filter mt-4">
+        <h3 class="admin-card-title text-center justify-content-center">Ranking Preliminar</h3>
+        <form action="" method="POST">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+              <label class="admin-form-label">Categoria</label>
+              <select id="ranking-categoria" class="form-select admin-form-select" name="categoria">
+                <option value="">-- Selecione a Categoria --</option>
+                <option value="1" <?= ($categoria ?? '') == "1" ? "selected" : "" ?>>I - Ensino Médio</option>
+                <option value="2" <?= ($categoria ?? '') == "2" ? "selected" : "" ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
+                <option value="3" <?= ($categoria ?? '') == "3" ? "selected" : "" ?>>III - Pesquisa Júnior</option>
+                <option value="4" <?= ($categoria ?? '') == "4" ? "selected" : "" ?>>IV - PcD</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="admin-form-label">Área</label>
+              <select id="ranking-area" class="form-select admin-form-select" name="area">
+                <option value="">-- Selecione a Área --</option>
+                <option value="1" <?= ($area ?? '') == "1" ? "selected" : "" ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
+                <option value="2" <?= ($area ?? '') == "2" ? "selected" : "" ?>>Matemática e suas Tecnologias - MT</option>
+                <option value="3" <?= ($area ?? '') == "3" ? "selected" : "" ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
+                <option value="4" <?= ($area ?? '') == "4" ? "selected" : "" ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
+                <option value="5" <?= ($area ?? '') == "5" ? "selected" : "" ?>>Robótica, Automação e Aplicação das TIC</option>
+                <option value="6" <?= ($area ?? '') == "6" ? "selected" : "" ?>>Ensino Fundamental</option>
+                <option value="7" <?= ($area ?? '') == "7" ? "selected" : "" ?>>Ensino Médio</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="admin-action-btn w-100 justify-content-center">Filtrar</button>
+>>>>>>> Stashed changes
             </div>
           </div>
+        </form>
+
+        <?php
+        require_once '../php/Connect.php';
+
+        $categoria = $_POST['categoria'] ?? null;
+        $area = $_POST['area'] ?? null;
+
+        $pesos = [
+          1 => 1,
+          2 => 1,
+          3 => 1.5,
+          4 => 1,
+          5 => 2,
+          6 => 1,
+          7 => 1,
+          8 => 1,
+          9 => 0.5
+        ];
+        $criteriosDesempate = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+        $sql = "SELECT t.id_trabalhos, t.titulo, e.nome AS escola, e.focalizada, e.ide, c.nome_categoria AS categoria, a.nome_area AS area 
+    FROM Trabalhos t 
+    LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas 
+    LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria 
+    LEFT JOIN Areas a ON t.id_areas = a.id_area 
+    WHERE 1=1";
+        $params = [];
+
+        if (!empty($categoria)) {
+          $sql .= " AND t.id_categoria = :categoria";
+          $params[':categoria'] = $categoria;
+        }
+        if (!empty($area)) {
+          $sql .= " AND t.id_areas = :area";
+          $params[':area'] = $area;
+        }
+
+        $sql .= " ORDER BY t.id_trabalhos DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $dados = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $id_trabalho = $row['id_trabalhos'];
+
+          $sql_avaliacoes = "SELECT id_jurado, criterio, nota FROM Avaliacoes WHERE id_trabalho = :id_trabalho";
+          $stmt_av = $pdo->prepare($sql_avaliacoes);
+          $stmt_av->execute([':id_trabalho' => $id_trabalho]);
+          $avaliacoes = $stmt_av->fetchAll(PDO::FETCH_ASSOC);
+
+          $notasPorJurado = [];
+          foreach ($avaliacoes as $av) {
+            $jurado = $av['id_jurado'];
+            $crit = (int)$av['criterio'];
+            $nota = (float)$av['nota'];
+            if (!isset($notasPorJurado[$jurado])) {
+              $notasPorJurado[$jurado] = [];
+            }
+            $notasPorJurado[$jurado][$crit] = $nota;
+          }
+
+          $calculaMediaPonderada = function ($notas, $pesos) {
+            $somaNotas = 0;
+            $somaPesos = 0;
+            foreach ($pesos as $crit => $peso) {
+              $nota = $notas[$crit] ?? null;
+              if ($nota !== null) {
+                $somaNotas += $nota * $peso;
+                $somaPesos += $peso;
+              }
+            }
+            return $somaPesos > 0 ? ($somaNotas / $somaPesos) * 10 : null;
+          };
+
+          $jurados = array_keys($notasPorJurado);
+          sort($jurados);
+
+          $mediaJurado1 = isset($jurados[0]) ? $calculaMediaPonderada($notasPorJurado[$jurados[0]], $pesos) : null;
+          $mediaJurado2 = isset($jurados[1]) ? $calculaMediaPonderada($notasPorJurado[$jurados[1]], $pesos) : null;
+
+          if ($mediaJurado1 !== null && $mediaJurado2 !== null) {
+            $notaFinal = ($mediaJurado1 + $mediaJurado2) / 2;
+          } elseif ($mediaJurado1 !== null) {
+            $notaFinal = $mediaJurado1;
+          } elseif ($mediaJurado2 !== null) {
+            $notaFinal = $mediaJurado2;
+          } else {
+            $notaFinal = null;
+          }
+
+          $focalizada = strtolower($row['focalizada'] ?? '') === 'focalizada' ? true : false;
+          $ide = strtolower($row['ide'] ?? '') === 'sim' ? true : false;
+
+          $dados[] = [
+            'id_trabalho' => $id_trabalho,
+            'titulo' => $row['titulo'],
+            'escola' => $row['escola'],
+            'focalizada' => $focalizada,
+            'ide' => $ide,
+            'IDEB' => $row['IDEB']?? '-',
+            'total_trabalhos' => $row['total_trabalhos'] ?? '-',
+            'categoria' => $row['categoria'],
+            'area' => $row['area'],
+            'jurados' => [
+              1 => [
+                'id' => $jurados[0] ?? null,
+                'media_ponderada' => $mediaJurado1,
+                'criterios' => isset($jurados[0]) ? ($notasPorJurado[$jurados[0]] ?? []) : []
+              ],
+              2 => [
+                'id' => $jurados[1] ?? null,
+                'media_ponderada' => $mediaJurado2,
+                'criterios' => isset($jurados[1]) ? ($notasPorJurado[$jurados[1]] ?? []) : []
+              ],
+            ],
+            'criterios' => [],
+            'nota_final' => $notaFinal,
+            'criterio_desempate' => null,
+          ];
+
+          foreach ($pesos as $idx => $_) {
+            $crit = $idx + 1;
+            $nota1 = isset($jurados[0]) ? ($notasPorJurado[$jurados[0]][$crit] ?? null) : null;
+            $nota2 = isset($jurados[1]) ? ($notasPorJurado[$jurados[1]][$crit] ?? null) : null;
+
+            if ($nota1 !== null && $nota2 !== null) {
+              $dados[count($dados) - 1]['criterios'][$crit] = ($nota1 + $nota2) / 2;
+            } elseif ($nota1 !== null) {
+              $dados[count($dados) - 1]['criterios'][$crit] = $nota1;
+            } elseif ($nota2 !== null) {
+              $dados[count($dados) - 1]['criterios'][$crit] = $nota2;
+            } else {
+              $dados[count($dados) - 1]['criterios'][$crit] = null;
+            }
+          }
+        }
+
+        
+
+        usort($dados, function ($a, $b) use ($criteriosDesempate) {
+          return comparaTrabalhos($a, $b, $criteriosDesempate);
+        });
+
+        for ($i = 0; $i < count($dados) - 1; $i++) {
+          $atual = $dados[$i];
+          $proximo = $dados[$i + 1];
+
+          if (abs($atual['nota_final'] - $proximo['nota_final']) < 0.0001) {
+            $criterioUsado = criterioDesempateUsado($atual, $proximo, $criteriosDesempate);
+            if ($criterioUsado !== null) {
+              $dados[$i]['criterio_desempate'] = $criterioUsado;
+              $dados[$i + 1]['criterio_desempate'] = null;
+            }
+          }
+        }
+        ?>
+
+        <div class="admin-card-table mt-4">
+          <table class="table admin-table admin-table-compact align-middle text-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-center" style="width: 80px;">Classificação</th>
+                <th class="text-start">Título</th>
+                <th class="text-start">Escola</th>
+                <th>Categoria</th>
+                <th>Área</th>
+                <th>Jurado 1</th>
+                <th>Jurado 2</th>
+                <th>Nota Final</th>
+                <th>Critério de Desempate</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-tbody">
+              <?php if (count($dados) > 0) {
+                $posicao = 1;
+                foreach ($dados as $trab) {
+                  echo '<tr>';
+                  echo '<td class="text-center"><span class="rank-badge">' . $posicao . 'º</span></td>';
+                  echo '<td class="text-start td-item-title">' . htmlspecialchars($trab['titulo']) . '</td>';
+                  echo '<td class="text-start">' . htmlspecialchars($trab['escola']) . '</td>';
+                  echo '<td><span class="category-pill">' . htmlspecialchars($trab['categoria']) . '</span></td>';
+                  echo '<td>' . htmlspecialchars($trab['area'] ?? 'Sem área') . '</td>';
+                  echo '<td class="fw-semibold">' . (
+                    isset($trab['jurados'][1]['media_ponderada']) && $trab['jurados'][1]['media_ponderada'] !== null
+                    ? number_format($trab['jurados'][1]['media_ponderada'], 2, ',', '')
+                    : '-'
+                  ) . '</td>';
+
+                  echo '<td class="fw-semibold">' . (
+                    isset($trab['jurados'][2]['media_ponderada']) && $trab['jurados'][2]['media_ponderada'] !== null
+                    ? number_format($trab['jurados'][2]['media_ponderada'], 2, ',', '')
+                    : '-'
+                  ) . '</td>';
+
+                  echo '<td class="fw-bold text-success">' . (
+                    $trab['nota_final'] !== null
+                    ? number_format($trab['nota_final'], 2, ',', '')
+                    : '-'
+                  ) . '</td>';
+                  if (isset($trab['criterio_desempate']) && $trab['criterio_desempate'] !== null) {
+                    $crit = $trab['criterio_desempate'];
+                    echo '<td><span class="badge bg-light text-dark border">' . htmlspecialchars($crit['criterio']) . '</span></td>';
+                  } else {
+                    echo '<td class="text-muted">-</td>';
+                  }
+                  echo '</tr>';
+                  $posicao++;
+                }
+              } else {
+                echo '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhum trabalho encontrado para os filtros selecionados.</td></tr>';
+              } ?>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

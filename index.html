@@ -3,51 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAFC - Home</title>
-  <link rel="stylesheet" href="assets/styles/index.css">
+  <title>SACC - Selecione seu login</title>
   <link rel="stylesheet" href="boostrap/CSS/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/styles/index.css?v=9">
   <link rel="alternate" href="assets/img/SIMBOLO.png" type="application/atom+xml" title="Atom">
-  <link rel="stylesheet" href="boostrap/CSS/bootstrap.min.css">
   <script src="boostrap/JS/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #4C8F5A;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden; /* Força a página a não ter barra de rolagem */
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    .transition-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+    }
+    .transition-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    @media (max-width: 768px) {
+      body {
+        overflow-y: auto; /* No celular, permite rolagem caso a tela seja muito pequena */
+        height: auto;
+        min-height: 100vh;
+      }
+    }
+  </style>
 </head>
 <body>
-  <nav class="navbar bg-body-tertiary">
-    <div class="d-flex">
-      <a class="navbar-brand" href="#">
-        <div id="corpo-img"> 
-          <img src="assets/img/SACC.png" alt="Logo" id="img-sacc" class="d-inline-block align-text-top">
-        </div>
-      </a>
-    </div>
-  </nav>
-  <div class="container d-flex justify-content-center align-items-center">
-    <div class="container-fluid" id="login-box">
-      <h1 class="h1" id="tit">Selecione seu login</h1>
-      <div class="row d-flex justify-content-center align-items-center" id="coluna">
-        <div class="col justify-content-center align-items-center" id="colunas">
-          <div class="card text-bg-light mb-3 d-flex" style="max-width: 10rem;" id="card-pai">
-            <div class="card-body" id="card-corpo">
-              <br><br>
-              <img src="assets/img/jurado.png" alt="Icone do Jurado" class="card-foto">
-              <a href="html/login_jurado.php"><button class="btn btn-success" id="bt1">Jurado</button></a>
+
+  <!-- Header Branco Padronizado -->
+  <header style="background-color: #ffffff; width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #e2e8f0;">
+    <a href="index.html" class="d-flex align-items-center justify-content-center">
+      <img src="assets/img/SACC.png" alt="SACC Logo" style="height: 85px; max-height: 85px; width: auto; object-fit: contain;">
+    </a>
+  </header>
+
+  <!-- Container Principal (Fundo verde restante) -->
+  <main class="flex-grow-1 d-flex flex-column align-items-center justify-content-center" style="padding: 15px;">
+    
+    <!-- Card Principal -->
+    <div class="bg-white rounded-4 shadow-lg text-center p-3 p-md-4 w-100 d-flex flex-column justify-content-center" style="max-width: 800px; border: 1px solid #f2f2f2; height: 100%; max-height: 75vh;">
+      
+      <h1 class="mb-3 mt-1" style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; font-size: 1.7rem; font-weight: 500; color: #222;">Selecione seu login</h1>
+      
+      <div class="row g-3 justify-content-center flex-grow-1 align-items-center">
+        
+        <!-- Opção Jurado -->
+        <div class="col-12 col-md-5 d-flex justify-content-center">
+          <div class="w-100 rounded-4 d-flex flex-column align-items-center py-3 px-3 transition-card" style="border: 1px solid #eaeaea; background-color: #ffffff; max-width: 320px;">
+            
+            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 55px;">
+              <img src="assets/img/jurado.png" alt="Ícone Jurado" class="img-fluid" style="height: 55px; width: auto; object-fit: contain;">
             </div>
+            
+            <a href="html/login_jurado.php" class="btn rounded-pill mb-2" style="width: 140px; background-color: #4C8F5A; color: white; font-weight: 500; padding: 8px 0;">
+              Jurado
+            </a>
+            
+            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.8rem; line-height: 1.4;">
+              Acesso para avaliadores de<br>projetos.
+            </p>
           </div>
         </div>
-        <div class="col">
-          <div class="card text-bg-light mb-3" style="max-width: 10rem;" id="card-pai">
-            <div class="card-body" id="card-corpo">
-              <br><br>
-              <img src="assets/img/admin.png" alt="Icone do Admin" class="card-foto">
-              <a  href="html/login_adm.php"><button class="btn btn-success" id="bt1">Admin</button></a>
+
+        <!-- Opção Admin -->
+        <div class="col-12 col-md-5 d-flex justify-content-center">
+          <div class="w-100 rounded-4 d-flex flex-column align-items-center py-3 px-3 transition-card" style="border: 1px solid #eaeaea; background-color: #ffffff; max-width: 320px;">
+            
+            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 55px;">
+              <img src="assets/img/admin.png" alt="Ícone Admin" class="img-fluid" style="height: 55px; width: auto; object-fit: contain;">
             </div>
+            
+            <a href="html/login_adm.php" class="btn rounded-pill mb-2" style="width: 140px; background-color: #4C8F5A; color: white; font-weight: 500; padding: 8px 0;">
+              Admin
+            </a>
+
+            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.8rem; line-height: 1.4;">
+              Gerenciamento do sistema e<br>dados.
+            </p>
           </div>
         </div>
+
       </div>
-      <div class="logos">
-        <img src="assets/img/crede7.png" alt="Crede 7 Canindé">
+      
+      <!-- Logo Crede 7 em Imagem - Dentro do card -->
+      <div class="mt-2 text-center">
+        <img src="assets/img/crede7.png" alt="Crede 7 Canindé" class="img-fluid" style="height: 55px; width: auto;">
       </div>
+
     </div>
-  </div>
-  </div>
+  </main>
+
 </body>
 </html>

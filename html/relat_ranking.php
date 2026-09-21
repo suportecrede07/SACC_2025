@@ -173,24 +173,21 @@ function comparaTrabalhos($a, $b, $criteriosDesempate)
 
 function criterioDesempateUsado($a, $b, $criteriosDesempate)
 {
-  // Checa qual dos 7 critérios desempata
   foreach ($criteriosDesempate as $index => $crit) {
     $notaA = $a['criterios'][$crit] ?? 0;
     $notaB = $b['criterios'][$crit] ?? 0;
     if ($notaA != $notaB) {
       return [
         'indice' => $index + 1,
-        'criterio' => "Critério #" . ($index + 1), // Vai exibir "Critério #1", "Critério #2", etc.
+        'criterio' => "Critério #" . ($index + 1), 
       ];
     }
   }
 
-  // Checa se desempata por Trabalhos Cadastrados
   if ($a['total_trabalhos'] != $b['total_trabalhos']) {
       return ['indice' => 'Trabalhos', 'criterio' => 'Maior percentual de trabalhos'];
   }
 
-  // Checa se desempata pelo IDEB
   if ($a['IDEB'] != $b['IDEB']) {
       return ['indice' => 'IDEB', 'criterio' => 'Menor IDEB'];
   }
@@ -198,7 +195,6 @@ function criterioDesempateUsado($a, $b, $criteriosDesempate)
   return null;
 }
 
-// ALTERE AQUI: Use apenas de 1 a 7 para a Regra 8.4.4
 $criteriosDesempate = [1,2,4,3,5,6,7];
 usort($dados, function ($a, $b) use ($criteriosDesempate) {
   return comparaTrabalhos($a, $b, $criteriosDesempate);

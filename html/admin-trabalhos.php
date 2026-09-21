@@ -18,8 +18,10 @@ LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
 LEFT JOIN Areas a ON t.id_areas = a.id_area
 WHERE 1=1";
 
-$result = $pdo->query($sql);
 $sql .= " ORDER BY t.id_trabalhos DESC";
+$result = $pdo->query($sql);
+$trabalhos = $result->fetchAll(PDO::FETCH_ASSOC);
+$total_trabalhos = count($trabalhos);
 ?>
 
 <!DOCTYPE html>
@@ -28,14 +30,15 @@ $sql .= " ORDER BY t.id_trabalhos DESC";
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trabalhos</title>
+  <title>Trabalhos - SAFC Admin</title>
 
-
-  <link href="../bootstrap/CSS/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../bootstrap/CSS/bootstrap-icons.css">
-  <script src="../bootstrap/JS/bootstrap.bundle.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="../boostrap/CSS/bootstrap.min.css" rel="stylesheet">
+  <script src="../boostrap/JS/bootstrap.bundle.min.js"></script>
   <script src="../boostrap/JS/jquery.min.js"></script>
-  <link rel="stylesheet" href="../assets/styles/listatrabalho.css">
+  <link rel="stylesheet" href="../assets/styles/dashboard-admin.css?v=<?= time() ?>">
 </head>
 
 <body>
@@ -43,57 +46,87 @@ $sql .= " ORDER BY t.id_trabalhos DESC";
   <button id="mobile-toggle" onclick="toggleSidebar()">
     <i><img src="../assets/img/menu.png"></i>
   </button>
-  <div id="sidebar" style="background-color: #4C8F5A;">
+  <div id="sidebar">
     <div>
-      <button class="toggle-btn" onclick="toggleSidebar()">
-        <img src="../assets/img/SIMBOLO.png" alt="SAFC">
-        <span class="brand-text">SAFC</span>
-      </button>
+      <div class="sidebar-top">
+        <div class="brand-wrapper">
+          <div class="brand-logo-card">
+            <img src="../assets/img/SIMBOLO.png" alt="SAFC">
+          </div>
+          <span class="brand-title-text">SAFC</span>
+        </div>
+      </div>
       <ul class="nav flex-column">
-        <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.png" class="dashboard"></i> <span class="label-text">Dashboard</span></a></li>
-        <li><a href="admin-escolas.php"><i><img src="../assets/img/escola.png" class="escola"></i> <span class="label-text">Escolas</span></a></li>
-        <li><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalho.png" class="trabalho"></i> <span class="label-text">Trabalhos</span></a></li>
-        <li><a href="admin-jurados.php"><i><img src="../assets/img/Jurados.png" class="jurado"></i> <span class="label-text">Jurados</span></a></li>
-        <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorio.png" class="relatorio"></i> <span class="label-text">Relatórios</span></a></li>
+        <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.svg" class="dashboard"></i> <span class="label-text">Dashboard</span></a></li>
+        <li><a href="admin-escolas.php"><i><img src="../assets/img/escolas.svg" class="escola"></i> <span class="label-text">Escolas</span></a></li>
+        <li class="active"><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalhos.svg" class="trabalho"></i> <span class="label-text">Trabalhos</span></a></li>
+        <li><a href="admin-jurados.php"><i><img src="../assets/img/jurados.svg" class="jurado"></i> <span class="label-text">Jurados</span></a></li>
+        <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorios.svg" class="relatorio"></i> <span class="label-text">Relatórios</span></a></li>
       </ul>
     </div>
     <ul class="nav flex-column bottom-nav">
       <li><a href="../php/AdmLogout.php"><img src="../assets/img/sair.png" class="sair"> <span class="label-text">Sair</span></a></li>
     </ul>
   </div>
+
   <main id="main">
-    <h2>Trabalhos</h2>
-    <br>
-    <hr><br>
-    <!-- Tabela de trabalhos -->
-    <table class="table table-bordered" id="workTable">
-      <thead>
-        <tr>
-          <th>Título do Trabalho</th>
-          <th>Escola</th>
-          <th>Categoria</th>
-          <th>Área</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-          echo '<tr>';
-          echo '<td>' . $row['titulo'] . '</td>';
-          echo '<td>' . $row['escola'] . '</td>';
-          echo '<td>' . $row['nome_categoria'] . '</td>';
-          echo '<td>' . $row['nome_area'] . '</td>';
-          echo '<td>';
-          echo '<a href="../php/Editatrabalhos.php?id=' . $row['id_trabalhos'] . '"><img src="../assets/img/editar.png" alt="Editar"></a> ';
-          echo '<a href="../php/Excluirtrabalhos.php?id=' . $row['id_trabalhos'] . '"><img src="../assets/img/deletar.png" alt="Deletar"></a>';
-          echo '</td>';
-          echo '</tr>';
-        }
-        ?>
-      </tbody>
-    </table>
+    <div class="page-header-clean">
+      <div class="page-title-row">
+        <h1 class="page-title">Trabalhos</h1>
+        <span class="badge-count"><?= $total_trabalhos ?> Cadastrados</span>
+      </div>
+      <p class="page-subtitle">Gerencie e visualize os projetos e trabalhos científicos cadastrados</p>
+    </div>
+
+    <!-- Tabela de trabalhos estilo card Nítido -->
+    <div class="admin-card-table">
+      <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0" id="workTable">
+          <thead>
+            <tr>
+              <th class="ps-4">TÍTULO DO TRABALHO</th>
+              <th>ESCOLA</th>
+              <th>CATEGORIA</th>
+              <th>ÁREA</th>
+              <th class="text-center pe-4">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if (!empty($trabalhos)): ?>
+              <?php foreach ($trabalhos as $row): ?>
+                <tr>
+                  <td class="ps-4 td-item-title"><?= htmlspecialchars($row['titulo']) ?></td>
+                  <td><?= htmlspecialchars($row['escola'] ?? '-') ?></td>
+                  <td><span class="category-pill"><?= htmlspecialchars($row['nome_categoria'] ?? '-') ?></span></td>
+                  <td><?= htmlspecialchars($row['nome_area'] ?? '-') ?></td>
+                  <td class="text-center pe-4 text-nowrap">
+                    <div class="d-inline-flex gap-2">
+                      <a href="../php/Editatrabalhos.php?id=<?= $row['id_trabalhos'] ?>" class="btn-action-edit" title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-1 3a.5.5 0 0 0 .606.606l3-1a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5z"/>
+                        </svg>
+                      </a>
+                      <a href="../php/Excluirtrabalhos.php?id=<?= $row['id_trabalhos'] ?>" class="btn-action-delete" onclick="return confirm('Tem certeza que deseja excluir este trabalho?');" title="Excluir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                        </svg>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">Nenhum trabalho cadastrado.</td>
+              </tr>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
+
   <script>
     function toggleSidebar() {
       if (window.innerWidth <= 768) {
@@ -109,6 +142,7 @@ $sql .= " ORDER BY t.id_trabalhos DESC";
       $('#sidebar').removeClass('mobile-open');
       $('#overlay').removeClass('show');
     }
+
     $(window).on('resize', function() {
       if (window.innerWidth > 768) {
         $('#sidebar').removeClass('mobile-open');

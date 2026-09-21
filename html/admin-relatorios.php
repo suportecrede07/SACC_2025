@@ -34,7 +34,8 @@ $trabalhos = $pdo->query("
   <script src="../boostrap/JS/bootstrap.bundle.min.js"></script>
   <link href="../boostrap/CSS/bootstrap-icons.css" rel="stylesheet">
   <script src="../boostrap/JS/jquery.min.js"></script>
-  <link rel="stylesheet" href="../assets/styles/relatorios.css">
+  <link rel="stylesheet" href="../assets/styles/dashboard-admin.css?v=<?= time() ?>">
+  <link rel="stylesheet" href="../assets/styles/relatorios.css?v=<?= time() ?>">
 </head>
 
 <body>
@@ -42,22 +43,26 @@ $trabalhos = $pdo->query("
   <button id="mobile-toggle" onclick="toggleSidebar()">
     <i><img src="../assets/img/menu.png"></i>
   </button>
-  <div id="sidebar" style="background-color: #4C8F5A;">
+  <div id="sidebar">
     <div>
-      <button class="toggle-btn" onclick="toggleSidebar()">
-        <img src="../assets/img/SIMBOLO.png" alt="SAFC">
-        <span class="brand-text">SAFC</span>
-      </button>
+      <div class="sidebar-top">
+        <div class="brand-wrapper">
+          <div class="brand-logo-card">
+            <img src="../assets/img/SIMBOLO.png" alt="SAFC">
+          </div>
+          <span class="brand-title-text">SAFC</span>
+        </div>
+      </div>
       <ul class="nav flex-column">
-        <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.png" class="dashboard"></i> <span
+        <li><a href="admin-dashboard.php"><i><img src="../assets/img/dashboard.svg" class="dashboard"></i> <span
               class="label-text">Dashboard</span></a></li>
-        <li><a href="admin-escolas.php"><i><img src="../assets/img/escola.png" class="escola"></i> <span
+        <li><a href="admin-escolas.php"><i><img src="../assets/img/escolas.svg" class="escola"></i> <span
               class="label-text">Escolas</span></a></li>
-        <li><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalho.png" class="trabalho"></i> <span
+        <li><a href="admin-trabalhos.php"><i><img src="../assets/img/trabalhos.svg" class="trabalho"></i> <span
               class="label-text">Trabalhos</span></a></li>
-        <li><a href="admin-jurados.php"><i><img src="../assets/img/Jurados.png" class="jurado"></i> <span
+        <li><a href="admin-jurados.php"><i><img src="../assets/img/jurados.svg" class="jurado"></i> <span
               class="label-text">Jurados</span></a></li>
-        <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorio.png" class="relatorio"></i> <span
+        <li class="active"><a href="admin-relatorios.php"><i><img src="../assets/img/relatorios.svg" class="relatorio"></i> <span
               class="label-text">Relatórios</span></a></li>
       </ul>
     </div>
@@ -67,88 +72,113 @@ $trabalhos = $pdo->query("
     </ul>
   </div>
   <main id="main">
-    <h2>Relatórios de Trabalhos</h2>
-    <br>
-    <hr><br>
+    <div class="container-fluid p-0">
+      <div class="page-header-clean d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1 class="page-title">Relatórios de Trabalhos</h1>
+          <p class="page-subtitle">Gere relatórios sintéticos e analíticos por escola, jurado ou ranking geral.</p>
+        </div>
+      </div>
 
-    <div class="filter-group">
-      <select id="Filtro_escola">
-        <option value="">Selecione a Escola</option>
-        <?php foreach ($escolas as $escola): ?>
-          <option value="<?= htmlspecialchars($escola['nome']) ?>">
-            <?= htmlspecialchars($escola['nome']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-      <select id="Filtro_categoria">
-        <option value="">Selecione a Categoria</option>
-        <?php foreach ($categorias as $categoria): ?>
-          <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
-            <?= htmlspecialchars($categoria['nome_categoria']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-      <select id="Filtro_area">
-        <option value="">Selecione a Área</option>
-        <?php foreach ($areas as $area): ?>
-          <option value="<?= htmlspecialchars($area['nome_area']) ?>">
-            <?= htmlspecialchars($area['nome_area']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
+      <div class="admin-card-filter mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="admin-form-label">Escola</label>
+            <select id="Filtro_escola" class="form-select admin-form-select">
+              <option value="">Selecione a Escola</option>
+              <?php foreach ($escolas as $escola): ?>
+                <option value="<?= htmlspecialchars($escola['nome']) ?>">
+                  <?= htmlspecialchars($escola['nome']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="admin-form-label">Categoria</label>
+            <select id="Filtro_categoria" class="form-select admin-form-select">
+              <option value="">Selecione a Categoria</option>
+              <?php foreach ($categorias as $categoria): ?>
+                <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
+                  <?= htmlspecialchars($categoria['nome_categoria']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="admin-form-label">Área</label>
+            <select id="Filtro_area" class="form-select admin-form-select">
+              <option value="">Selecione a Área</option>
+              <?php foreach ($areas as $area): ?>
+                <option value="<?= htmlspecialchars($area['nome_area']) ?>">
+                  <?= htmlspecialchars($area['nome_area']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+      </div>
 
-    </div>
-    <br>
-    <div class="report-buttons">
-      <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalJurado"
-        style="background-color: #4C8F5A;">Por Jurado</button>
-      <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalAmbosJurados"
-        style="background-color: #4C8F5A;">Ambos os Jurados</button>
-      <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalPorEscola"
-        style="background-color: #4C8F5A;">Por Escola</button>
-      <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#modalRanking"
-        style="background-color: #4C8F5A;">Ranking</button>
-    </div>
-    <br>
-    <table class="table table-striped table-bordered" id="workTable">
-      <thead class=" table-success" style="border: 1px solid">
-        <tr class="tr">
-          <th class="th">Título do Trabalho</th>
-          <th class="th">Escola</th>
-          <th class="th">Categoria</th>
-          <th class="th">Área</th>
-          <th class="th">Download</th>
-        </tr>
-      </thead>
-      <tbody class="table-striped text-center" id="workTbody" style="border: 1px solid">
-        <?php foreach ($trabalhos as $t): ?>
-          <?php
-          $stmt = $pdo->prepare("SELECT id_jurado FROM Avaliacoes WHERE id_trabalho = :id_trabalho LIMIT 1");
-          $stmt->execute(['id_trabalho' => $t['id_trabalhos']]);
-          $juradoRow = $stmt->fetch(PDO::FETCH_ASSOC);
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalJurado">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
+          Por Jurado
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalAmbosJurados">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75M9 21v-2a4 4 0 00-3-3.87"/></svg>
+          Ambos os Jurados
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalPorEscola">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Por Escola
+        </button>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalRanking">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Ranking
+        </button>
+      </div>
 
-          $id_jurado = $juradoRow['id_jurado'] ?? null;
-          ?>
-          <tr>
-            <td><?= htmlspecialchars($t['titulo']) ?></td>
-            <td><?= htmlspecialchars($t['escola'] ?? '—') ?></td>
-            <td><?= htmlspecialchars($t['categoria'] ?? '—') ?></td>
-            <td><?= htmlspecialchars($t['area'] ?? '—') ?></td>
-            <td class="d-flex justify-content-center">
-              <?php if ($id_jurado): ?>
-              
-                <button class="btn bg-danger me-1"
-                  onclick="abrirModalRelatorio(<?= $t['id_trabalhos'] ?>, 'pdf')">PDF</button>
-                <button class="btn btn-success me-1"
-                  onclick="abrirModalRelatorio(<?= $t['id_trabalhos'] ?>, 'excel')">Excel</button>
-              <?php else: ?>
-                <span class="text-muted">Sem avaliação</span>
-              <?php endif; ?>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+      <div class="admin-card-table">
+        <table class="table admin-table align-middle text-center mb-0" id="workTable">
+          <thead>
+            <tr>
+              <th class="text-start">Título do Trabalho</th>
+              <th class="text-start">Escola</th>
+              <th>Categoria</th>
+              <th>Área</th>
+              <th class="text-center" style="width: 160px;">Download</th>
+            </tr>
+          </thead>
+          <tbody id="workTbody">
+            <?php foreach ($trabalhos as $t): ?>
+              <?php
+              $stmt = $pdo->prepare("SELECT id_jurado FROM Avaliacoes WHERE id_trabalho = :id_trabalho LIMIT 1");
+              $stmt->execute(['id_trabalho' => $t['id_trabalhos']]);
+              $juradoRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+              $id_jurado = $juradoRow['id_jurado'] ?? null;
+              ?>
+              <tr>
+                <td class="text-start td-item-title"><?= htmlspecialchars($t['titulo']) ?></td>
+                <td class="text-start"><?= htmlspecialchars($t['escola'] ?? '—') ?></td>
+                <td><span class="category-pill"><?= htmlspecialchars($t['categoria'] ?? '—') ?></span></td>
+                <td><?= htmlspecialchars($t['area'] ?? 'Sem área') ?></td>
+                <td class="text-center">
+                  <?php if ($id_jurado): ?>
+                    <div class="d-inline-flex gap-1 justify-content-center">
+                      <button class="btn btn-sm btn-danger px-2 py-1 fw-semibold" style="font-size: 0.78rem;"
+                        onclick="abrirModalRelatorio(<?= $t['id_trabalhos'] ?>, 'pdf')">PDF</button>
+                      <button class="btn btn-sm btn-success px-2 py-1 fw-semibold" style="font-size: 0.78rem;"
+                        onclick="abrirModalRelatorio(<?= $t['id_trabalhos'] ?>, 'excel')">Excel</button>
+                    </div>
+                  <?php else: ?>
+                    <span class="text-muted" style="font-size: 0.82rem;">Sem avaliação</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const filtroEscola = document.getElementById("Filtro_escola");
