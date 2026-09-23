@@ -309,10 +309,6 @@ ob_start();
         </tbody>
       </table>
   </div>
-  <div class="footer-images">
-    <img src="<?= $imgCrede7 ?>">
-    <img src="<?= $imgCeara ?>">
-  </div>
 </body>
 
 </html>

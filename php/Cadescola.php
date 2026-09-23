@@ -12,6 +12,7 @@ $IDEB = $_POST['IDEB'] ?? null;
 $total_trabalhos = $_POST['total_trabalhos'] ?? null;
 $idIde = $_POST['ide'] ?? null;
 $ide = ($idIde == '1') ? 'Sim' : null;
+$categoriaEscola = $_POST['categoriaEscola'] ?? null;
 
 $municipios = [
 '1' => 'Caridade',
@@ -39,8 +40,8 @@ if (empty($idMunicipio)) {
 try {
 
     $sql = "INSERT INTO Escolas 
-            (nome, focalizada, ide, municipio, IDEB, total_trabalhos)
-            VALUES (?, ?, ?, ?, ?, ?)";
+            (nome, focalizada, ide, municipio, IDEB, total_trabalhos, id_categoria_escola)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $pdo->prepare($sql);
 
@@ -50,7 +51,8 @@ try {
         $ide,
         $municipio,
         $IDEB,
-        $total_trabalhos
+        $total_trabalhos,
+        $categoriaEscola
     ]);
 
     header('Location: ../html/admin-dashboard.php?msg=escola_cadastrada');

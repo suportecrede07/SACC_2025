@@ -267,10 +267,7 @@ ob_start();
     </table>
   </div>
 
-  <div class="footer-images">
-    <img src="<?= $imgCrede7 ?>">
-    <img src="<?= $imgCeara ?>">
-  </div>
+
 </body>
 
 </html>

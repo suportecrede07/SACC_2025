@@ -223,10 +223,7 @@ ob_start();
     </div>
 
 
-  <div class="footer-images">
-    <img src="<?= $logo2 ?>" alt="CREDE">
-    <img src="<?= $logo3 ?>" alt="CEARÁ">
-  </div>
+
 
 </body>
 

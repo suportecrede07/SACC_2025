@@ -30,12 +30,11 @@
       opacity: 0.9;
     }
     @media (max-width: 768px) {
-      body {
-        overflow-y: auto; /* No celular, permite rolagem caso a tela seja muito pequena */
-        height: auto;
-        min-height: 100vh;
-      }
-    }
+  .main-card {
+    max-height: none !important;
+    height: auto !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -48,12 +47,10 @@
   </header>
 
   <!-- Container Principal (Fundo verde restante) -->
-  <main class="flex-grow-1 d-flex flex-column align-items-center justify-content-center" style="padding: 15px;">
+  <main class="my-auto d-flex flex-column align-items-center justify-content-center" style="padding: 15px;">
     
     <!-- Card Principal -->
-    <div class="bg-white rounded-4 shadow-lg text-center p-3 p-md-4 w-100 d-flex flex-column justify-content-center" style="max-width: 800px; border: 1px solid #f2f2f2; height: 100%; max-height: 75vh;">
-      
-      <h1 class="mb-3 mt-1" style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif; font-size: 1.7rem; font-weight: 500; color: #222;">Selecione seu login</h1>
+    <div class="bg-white rounded-4 shadow-lg text-center p-3 p-md-4 w-100 d-flex flex-column justify-content-center" style="max-width: 800px; border: 1px solid #f2f2f2; min-height: 65vh;">
       
       <div class="row g-3 justify-content-center flex-grow-1 align-items-center">
         
@@ -61,15 +58,15 @@
         <div class="col-12 col-md-5 d-flex justify-content-center">
           <div class="w-100 rounded-4 d-flex flex-column align-items-center py-3 px-3 transition-card" style="border: 1px solid #eaeaea; background-color: #ffffff; max-width: 320px;">
             
-            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 55px;">
-              <img src="assets/img/jurado.png" alt="Ícone Jurado" class="img-fluid" style="height: 55px; width: auto; object-fit: contain;">
+            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 100px;">
+              <img src="assets/img/jurado.svg" alt="Ícone Jurado" class="img-fluid" style="height: 100px; width: auto; object-fit: contain;">
             </div>
             
             <a href="html/login_jurado.php" class="btn rounded-pill mb-2" style="width: 140px; background-color: #4C8F5A; color: white; font-weight: 500; padding: 8px 0;">
               Jurado
             </a>
             
-            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.8rem; line-height: 1.4;">
+            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.9rem; line-height: 1.4;">
               Acesso para avaliadores de<br>projetos.
             </p>
           </div>
@@ -79,15 +76,15 @@
         <div class="col-12 col-md-5 d-flex justify-content-center">
           <div class="w-100 rounded-4 d-flex flex-column align-items-center py-3 px-3 transition-card" style="border: 1px solid #eaeaea; background-color: #ffffff; max-width: 320px;">
             
-            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 55px;">
-              <img src="assets/img/admin.png" alt="Ícone Admin" class="img-fluid" style="height: 55px; width: auto; object-fit: contain;">
+            <div class="mb-3 mt-1 d-flex align-items-center justify-content-center" style="height: 100px;">
+              <img src="assets/img/admin.svg" alt="Ícone Admin" class="img-fluid" style="height: 100px; width: auto; object-fit: contain;">
             </div>
             
             <a href="html/login_adm.php" class="btn rounded-pill mb-2" style="width: 140px; background-color: #4C8F5A; color: white; font-weight: 500; padding: 8px 0;">
               Admin
             </a>
 
-            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.8rem; line-height: 1.4;">
+            <p class="text-muted mb-1 d-none d-md-block" style="font-size: 0.9rem; line-height: 1.4;">
               Gerenciamento do sistema e<br>dados.
             </p>
           </div>
@@ -97,7 +94,7 @@
       
       <!-- Logo Crede 7 em Imagem - Dentro do card -->
       <div class="mt-2 text-center">
-        <img src="assets/img/crede7.png" alt="Crede 7 Canindé" class="img-fluid" style="height: 55px; width: auto;">
+        <img src="assets/img/crede7.png" alt="Crede 7 Canindé" class="img-fluid" style="height: 75px; width: auto;">
       </div>
 
     </div>

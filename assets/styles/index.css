@@ -97,23 +97,16 @@ a {
 }
 
 .logos {
-  margin-top: 20px;
+  margin-top: 15px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
-  position: relative;
-  top: -25px;
-  margin-left: 25%;
-  margin-right: 38%;
+  width: 100%;
 }
 
 .logos img {
-  height: 40px;
-  align-items: center;
-  margin-left: 43%;
-  margin-right: 80%;
-  margin-top: 12%;
+  height: 60px;
+  width: auto;
 }
 
 #card-pai {

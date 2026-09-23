@@ -50,7 +50,7 @@ $criterios = [
     1 => "Criatividade e Inovação",
     2 => "Relevância da pesquisa",
     3 => "Conhecimento científico fundamentado e contextualização do problema abordado",
-    4 => "Impacto para a construção de uma sociedade que promova ciência, cidadania e convivência democratica: o conhecimento a servico da vida coletiva",
+    4 => "Impacto para a construção de uma sociedade que promova a ciência e o desenvolvimento científico",
     5 => "Metodologia científica conectada com os objetivos, resultados e conclusões",
     6 => "Clareza e objetividade na linguagem apresentada",
     7 => "Banner",
@@ -178,10 +178,7 @@ ob_start();
         </tbody>
     </table>
 
-    <div class="footer-images">
-        <img src="<?= $imgCrede7 ?>">
-        <img src="<?= $imgCeara ?>">
-    </div>
+
 
 </body>
 

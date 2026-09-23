@@ -3,7 +3,11 @@ session_start();
 
 include_once("../php/Connect.php");
 
-$sql = "SELECT * FROM Escolas ORDER BY id_escolas DESC";
+$sql = "SELECT Escolas.*, categoria_escolas.categoria_da_escola
+FROM Escolas
+LEFT JOIN categoria_escolas ON escolas.id_categoria_escola = categoria_escolas.id
+ORDER BY Escolas.id_escolas DESC";
+
 $result = $pdo->query($sql);
 $escolas = $result->fetchAll(PDO::FETCH_ASSOC);
 $total_escolas = count($escolas);
@@ -11,7 +15,7 @@ $total_escolas = count($escolas);
 
 <!DOCTYPE html>
 
-<html lang="pt-br">
+<html lang="PT-BR">
 
 <head>
     <meta charset="UTF-8">
@@ -120,7 +124,7 @@ $total_escolas = count($escolas);
                         <?php if (!empty($escolas)): ?>
                             <?php foreach ($escolas as $user_data): ?>
                                 <tr>
-                                    <td class="ps-4 td-item-title" id="nome_escolas"><?= htmlspecialchars($user_data['nome']) ?></td>
+                                    <td class="ps-4 td-item-title" id="nome_escolas"><?= htmlspecialchars(($user_data['categoria_da_escola'] ?? '') . ' ' . $user_data['nome']) ?></td>
                                     <td><?= htmlspecialchars($user_data['municipio'] ?? '-') ?></td>
                                     <td>
                                         <span class="category-pill"><?= htmlspecialchars($user_data['focalizada'] ?? '-') ?></span>

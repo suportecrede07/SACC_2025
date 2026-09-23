@@ -304,9 +304,7 @@ $pendentes = $totalAtribuidos - $avaliados;
                   <?php endforeach; ?>
                 </div>
 
-                <div class="mt-3">
-                  <button type="button" class="btn btn-modal-finalizar w-100 py-2.5 fw-bold" onclick="document.getElementById('btnAbrirConfirmacao').click()">Finalizar Avaliação</button>
-                </div>
+                
               </div>
 
               <!-- CAMPOS REAIS DO FORMULÁRIO QUE SERÃO SUBMETIDOS -->
@@ -415,8 +413,8 @@ $pendentes = $totalAtribuidos - $avaliados;
           somaNotas += numero;
 
           if (badge) {
-            badge.textContent = 'CONCLUÍDO';
-            badge.style.cssText = 'font-size: 0.72rem; background-color: #f0fdf4 !important; color: #15803d !important; border: 1px solid #bbf7d0 !important;';
+        badge.textContent = numero.toFixed(2).replace('.', ',');
+        badge.style.cssText = 'font-size: 0.72rem; background-color: #f0fdf4 !important; color: #15803d !important; border: 1px solid #bbf7d0 !important; font-weight: bold;';
           }
         } else {
           if (badge) {

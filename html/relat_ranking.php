@@ -183,7 +183,10 @@ function criterioDesempateUsado($a, $b, $criteriosDesempate)
       ];
     }
   }
-
+  /* -- DESATIVADOS A PEDIDO --
+          if ($a['focalizada'] !== $b['focalizada']) { return ['indice' => 'Focalizada', 'criterio' => 'Escola focalizada']; }
+          if ($a['ide'] !== $b['ide']) { return ['indice' => 'IDE', 'criterio' => 'Escola com IDE']; }
+          */
   if ($a['total_trabalhos'] != $b['total_trabalhos']) {
       return ['indice' => 'Trabalhos', 'criterio' => 'Maior percentual de trabalhos'];
   }
@@ -372,10 +375,6 @@ ob_start();
             <?php endforeach; ?>
         </tbody>
     </table>
-  </div>
-  <div class="footer-images">
-    <img src="<?= $imgCrede7 ?>">
-    <img src="<?= $imgCeara ?>">
   </div>
 </body>
 
