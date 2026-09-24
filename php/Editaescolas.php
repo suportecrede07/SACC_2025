@@ -13,6 +13,10 @@ $stmt = $pdo->prepare("SELECT * FROM Escolas WHERE id_escolas = ?");
 $stmt->execute([$id]);
 $escola = $stmt->fetch(PDO::FETCH_ASSOC);
 
+$stmtModalidade = $pdo->prepare("SELECT * FROM Categoria_escolas WHERE id = ?");
+$stmtModalidade->execute([$id]);
+$categoria_escolas = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
+
 if (!$escola) {
     echo 'Escola não encontrada';
 }
@@ -31,6 +35,20 @@ if (!$escola) {
     <h2>Editar Escola</h2>
 
     <form method="POST" action="Atualizaescolas.php">
+        <label class="form-label mt-2">Selecione a Modalidade</label>
+
+        <label class="form-label mt-2">Tipo</label>
+        <select name="Modalidade" class="form-control">
+            <option value="" <?= empty($escola['id_categoria_escola']) ? 'selected' : '' ?>>Selecione...</option>
+            <option value="1" <?= ($escola['id_categoria_escola'] === 'EEEP') ? 'selected' : '' ?>>EEEP</option>
+            <option value="2" <?= ($escola['id_categoria_escola'] === 'EEMTI') ? 'selected' : '' ?>>EEMTI</option>
+            <option value="3" <?= ($escola['id_categoria_escola'] === 'EEM') ? 'selected' : '' ?>>EEM</option>
+            <option value="4" <?= ($escola['id_categoria_escola'] === 'EEMPC') ? 'selected' : '' ?>>EEMPC</option>
+            <option value="5" <?= ($escola['id_categoria_escola'] === 'CEJA') ? 'selected' : '' ?>>CEJA</option>
+            <option value="6" <?= ($escola['id_categoria_escola'] === 'INDÍGINA') ? 'selected' : '' ?>>INDÍGINA</option>
+            <option value="7" <?= ($escola['id_categoria_escola'] === 'MUNICIPAL') ? 'selected' : '' ?>>MUNICIPAL</option>
+        </select>
+
         <input type="hidden" name="id" value="<?= $escola['id_escolas'] ?>">
 
         <label for="nome" class="form-label">Nome da Instituição</label>

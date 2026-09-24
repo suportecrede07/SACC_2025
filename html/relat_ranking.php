@@ -20,19 +20,21 @@ if (isset($_GET['id_areas']) && is_numeric($_GET['id_areas'])) {
 }
 
 $sql = "SELECT t.id_trabalhos,
- t.titulo,
-  e.nome AS escola,
-   e.focalizada,
+    t.titulo,
+    e.nome AS escola,
+    e.focalizada,
     e.ide,
-      e.IDEB,
-        e.total_trabalhos,
-     c.nome_categoria AS categoria,
-      a.nome_area AS area 
-        FROM Trabalhos t 
-        LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas 
-        LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria 
-        LEFT JOIN Areas a ON t.id_areas = a.id_area 
-         WHERE t.id_categoria = :categoria";
+    e.IDEB,
+    e.total_trabalhos,
+    c.nome_categoria AS categoria,
+    a.nome_area AS area,
+    ce.categoria_da_escola
+FROM Trabalhos t
+LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
+LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
+LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
+LEFT JOIN Areas a ON t.id_areas = a.id_area
+WHERE t.id_categoria = :categoria";
 
 $params = [':categoria' => $id_categoria];
 
@@ -145,6 +147,7 @@ foreach ($trabalhos as $row) {
     'criterio_desempate' => null,
     'IDEB' => is_numeric($row['IDEB']) ? (float)$row['IDEB'] : null,
     'total_trabalhos' => is_numeric($row['total_trabalhos']) ? (int)$row['total_trabalhos'] : 0,
+    'Modalidade' => $row['categoria_da_escola'],
   ];
 }
 
@@ -337,11 +340,13 @@ ob_start();
             e.nome AS escola,
              e.focalizada,
               e.ide,
+              ce.categoria_da_escola,
                c.nome_categoria AS categoria,
                 a.nome_area AS area 
             FROM Trabalhos t 
             LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas 
             LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria 
+            LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
             LEFT JOIN Areas a ON t.id_areas = a.id_area 
             WHERE 1=1";
           $sql_avaliacoes = "SELECT id_jurado, criterio, nota FROM Avaliacoes WHERE id_trabalho = :id_trabalho";
@@ -358,7 +363,7 @@ ob_start();
 
             <tr>
               <td><?= $index + 1 ?></td>
-              <td><?= htmlspecialchars($trab['escola']) ?></td>
+              <td><?= $trab['Modalidade'] . ' ' . htmlspecialchars($trab['escola']) ?></td>
               <td><?= htmlspecialchars($trab['titulo']) ?></td>
               <td>
                 <?= $trab['nota_final'] !== null ? number_format($trab['nota_final'], 2, ',', '') : '-' ?>

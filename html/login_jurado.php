@@ -81,7 +81,7 @@ if (isset($_SESSION['login_error'])) {
         
         <div class="mb-3 text-start">
           <label for="usuario" class="form-label" style="font-weight: 500; font-size: 0.9rem;">Usuário:</label>
-          <input class="form-control" type="text" inputmode="numeric" name="usuario" maxlength="6" required placeholder="Digite seu usuário" />
+          <input class="form-control" type="text" inputmode="numeric" id="usuario" name="usuario" maxlength="6" required placeholder="Digite seu usuário" />
         </div>
         
         <div class="mb-4 text-start">
@@ -97,7 +97,10 @@ if (isset($_SESSION['login_error'])) {
           </div>
         </div>
         
-        <button type="submit" class="btn-login">Entrar</button>
+        <!-- Área para mensagens de erro dinâmicas via JS AJAX -->
+        <div id="loginErrorArea" class="mb-3 text-center text-danger font-weight-bold" style="font-size: 0.9rem; display: none;"></div>
+
+        <button type="submit" id="btnLoginSubmit" class="btn-login">Entrar</button>
         
         <?php if (!empty($error)) : ?>
           <div style="color: #d9534f; margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 500;">
@@ -118,7 +121,53 @@ if (isset($_SESSION['login_error'])) {
     </div>
   </main>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL DE PRIMEIRO ACESSO (FRONT-END)                                       -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modalPrimeiroAcesso" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalPrimeiroAcessoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+        
+        <div class="modal-header border-0 pb-0" style="background-color: #f8f9fa;">
+          <h5 class="modal-title font-weight-bold text-dark w-100 text-center pt-2" id="modalPrimeiroAcessoLabel" style="color: #222; font-size: 1.25rem;">
+            Primeiro Acesso Detectado
+          </h5>
+        </div>
+
+        <div class="modal-body p-4 text-center">
+          <p class="text-muted mb-4" style="font-size: 0.95rem;">
+            Por questões de segurança, é necessário cadastrar uma nova senha pessoal antes de continuar no sistema.
+          </p>
+
+          <form id="formNovaSenha">
+            <!-- Campo oculto para guardar o usuário/ID que o backend enviar -->
+            <input type="hidden" name="usuario_primeiro_acesso" id="modalUsuarioInput" value="">
+
+            <div class="mb-3 text-start">
+              <label for="nova_senha" class="form-label" style="font-weight: 500; font-size: 0.88rem;">Nova Senha:</label>
+              <input type="password" class="form-control" id="nova_senha" name="nova_senha" required minlength="6" placeholder="Digite no mínimo 6 caracteres">
+            </div>
+
+            <div class="mb-3 text-start">
+              <label for="confirma_senha" class="form-label" style="font-weight: 500; font-size: 0.88rem;">Confirmar Nova Senha:</label>
+              <input type="password" class="form-control" id="confirma_senha" name="confirma_senha" required minlength="6" placeholder="Repita a nova senha">
+            </div>
+
+            <!-- Área de alerta de erro do modal -->
+            <div id="modalError" class="alert alert-danger p-2 mb-3" style="display: none; font-size: 0.85rem;"></div>
+
+            <button type="submit" id="btnSalvarNovaSenha" class="btn-login w-100 mt-2">
+              Salvar Nova
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Alternar visibilidade da senha no formulário de login principal
     document.getElementById('togglePassword').addEventListener('click', function (e) {
       const password = document.getElementById('senha');
       const eyeIcon = document.getElementById('eyeIcon');
@@ -132,7 +181,158 @@ if (isset($_SESSION['login_error'])) {
         eyeIcon.innerHTML = '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>';
       }
     });
+
+    /**
+     * =========================================================================
+     * INSTRUÇÕES PARA O DESENVOLVEDOR DO BACK-END (php/Jurado.php)
+     * =========================================================================
+     * Este formulário agora envia a requisição via AJAX (Fetch API).
+     * O backend 'php/Jurado.php' deve responder em formato JSON:
+     * 
+     * Caso 1 (Primeiro Acesso):
+     * { "status": "primeiro_acesso", "usuario": "123456" }
+     * 
+     * Caso 2 (Login Normal Sucesso):
+     * { "status": "sucesso", "redirect": "jurado-dashboard.php" }
+     * 
+     * Caso 3 (Erro de Credenciais):
+     * { "status": "erro", "mensagem": "Usuário ou senha incorretos." }
+     * =========================================================================
+     */
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      
+      const form = this;
+      const formData = new FormData(form);
+      const errorArea = document.getElementById('loginErrorArea');
+      const btnSubmit = document.getElementById('btnLoginSubmit');
+
+      errorArea.style.display = 'none';
+      errorArea.innerText = '';
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'Verificando...';
+
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        // Tenta converter a resposta para JSON
+        return response.json().catch(() => {
+          // Caso o backend antigo ainda faça redirect HTTP direto, submete o formulário tradicionalmente
+          form.submit();
+        });
+      })
+      .then(data => {
+        if (!data) return;
+
+        if (data.status === 'primeiro_acesso') {
+          // Preenche o campo oculto com o usuário
+          document.getElementById('modalUsuarioInput').value = data.usuario || document.getElementById('usuario').value;
+          // Abre o Modal Bootstrap de Primeiro Acesso
+          const modalElem = document.getElementById('modalPrimeiroAcesso');
+          const modalInstance = new bootstrap.Modal(modalElem);
+          modalInstance.show();
+        } else if (data.status === 'sucesso') {
+          // Redireciona para o Dashboard
+          window.location.href = data.redirect || 'jurado-dashboard.php';
+        } else if (data.status === 'erro') {
+          errorArea.innerText = data.mensagem || 'Ocorreu um erro no login.';
+          errorArea.style.display = 'block';
+        } else {
+          // Fallback padrão se não se encaixar no contrato
+          form.submit();
+        }
+      })
+      .catch(err => {
+        console.error('Erro na requisição AJAX de login:', err);
+        // Em caso de falha de conexão ou incompatibilidade temporária do backend, faz submit padrao
+        form.submit();
+      })
+      .finally(() => {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = 'Entrar';
+      });
+    });
+
+    /**
+     * =========================================================================
+     * INSTRUÇÕES PARA O DESENVOLVEDOR DO BACK-END (php/SalvarNovaSenha.php)
+     * =========================================================================
+     * O modal envia via POST para 'php/SalvarNovaSenha.php' com os parâmetros:
+     * - usuario_primeiro_acesso
+     * - nova_senha
+     * - confirma_senha
+     * 
+     * O backend deve alterar a senha, atualizar primeiro_acesso para 0 (ou FALSE),
+     * iniciar a sessão do jurado e responder JSON:
+     * 
+     * Sucesso:
+     * { "status": "sucesso", "redirect": "jurado-dashboard.php" }
+     * 
+     * Erro:
+     * { "status": "erro", "mensagem": "As senhas não coincidem ou não atendem aos critérios." }
+     * =========================================================================
+     */
+    document.getElementById('formNovaSenha').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const novaSenha = document.getElementById('nova_senha').value;
+      const confirmaSenha = document.getElementById('confirma_senha').value;
+      const modalError = document.getElementById('modalError');
+      const btnSalvar = document.getElementById('btnSalvarNovaSenha');
+
+      modalError.style.display = 'none';
+      modalError.innerText = '';
+
+      if (novaSenha !== confirmaSenha) {
+        modalError.innerText = 'As senhas digitadas não coincidem.';
+        modalError.style.display = 'block';
+        return;
+      }
+
+      if (novaSenha.length < 6) {
+        modalError.innerText = 'A senha deve possuir no mínimo 6 caracteres e uma letra Maiuscula e minuscula.';
+        modalError.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData(this);
+      btnSalvar.disabled = true;
+      btnSalvar.innerText = 'Salvando...';
+
+      fetch('../php/SalvarNovaSenha.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'sucesso') {
+          window.location.href = data.redirect || 'jurado-dashboard.php';
+        } else {
+          modalError.innerText = data.mensagem || 'Erro ao salvar a nova senha.';
+          modalError.style.display = 'block';
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao salvar nova senha:', err);
+        modalError.innerText = 'Erro de comunicação com o servidor. Tente novamente.';
+        modalError.style.display = 'block';
+      })
+      .finally(() => {
+        btnSalvar.disabled = false;
+        btnSalvar.innerText = 'Salvar Nova';
+      });
+    });
   </script>
 
 </body>
+
+
 </html>

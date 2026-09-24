@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 
 require_once '../php/Connect.php';
 
-$escolas = $pdo->query("SELECT id_escolas, nome FROM Escolas ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
+$escolas = $pdo->query("SELECT e.id_escolas, e.nome, ce.categoria_da_escola FROM Escolas e LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id ORDER BY e.nome")->fetchAll(PDO::FETCH_ASSOC);
 $jurados = $pdo->query("SELECT id_jurados, nome FROM Jurados ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
 $categorias = $pdo->query("SELECT id_categoria, nome_categoria FROM Categorias ORDER BY nome_categoria")->fetchAll(PDO::FETCH_ASSOC);
 $areas = $pdo->query("SELECT id_area, nome_area FROM Areas ORDER BY nome_area")->fetchAll(PDO::FETCH_ASSOC);
@@ -16,14 +16,19 @@ $trabalhos = $pdo->query("
     t.titulo,
     e.nome AS escola,
     c.nome_categoria AS categoria,
-    a.nome_area AS area
+    a.nome_area AS area,
+    ce.categoria_da_escola
   FROM Trabalhos t
   LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
   LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
+  LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
   LEFT JOIN Areas a ON t.id_areas = a.id_area
   ORDER BY t.titulo
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+
 
 <head>
   <meta charset="UTF-8">
@@ -87,8 +92,8 @@ $trabalhos = $pdo->query("
             <select id="Filtro_escola" class="form-select admin-form-select">
               <option value="">Selecione a Escola</option>
               <?php foreach ($escolas as $escola): ?>
-                <option value="<?= htmlspecialchars($escola['nome']) ?>">
-                  <?= htmlspecialchars($escola['nome']) ?>
+                <option value="<?= htmlspecialchars(($escola['categoria_da_escola'] ?? '') . ' ' . $escola['nome']) ?>">
+                  <?= htmlspecialchars(($escola['categoria_da_escola'] ?? '') . ' ' . $escola['nome']) ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -159,7 +164,7 @@ $trabalhos = $pdo->query("
               ?>
               <tr>
                 <td class="text-start td-item-title"><?= htmlspecialchars($t['titulo']) ?></td>
-                <td class="text-start"><?= htmlspecialchars($t['escola'] ?? '—') ?></td>
+                <td class="text-start"><?= htmlspecialchars(($t['categoria_da_escola'] ?? '') . ' ' . $t['escola']) ?></td>
                 <td><span class="category-pill"><?= htmlspecialchars($t['categoria'] ?? '—') ?></span></td>
                 <td><?= htmlspecialchars($t['area'] ?? 'Sem área') ?></td>
                 <td class="text-center">
@@ -458,7 +463,7 @@ $trabalhos = $pdo->query("
               <option value="">Selecione a Escola</option>
               <?php foreach ($escolas as $escola): ?>
                 <option value="<?= htmlspecialchars($escola['id_escolas']) ?>">
-                  <?= htmlspecialchars($escola['nome']) ?>
+                  <?= htmlspecialchars($escola['categoria_da_escola'] ?? '') .' '. htmlspecialchars($escola['nome']) ?>
                 </option>
               <?php endforeach; ?>
             </select>

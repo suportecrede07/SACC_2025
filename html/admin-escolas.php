@@ -15,7 +15,7 @@ $total_escolas = count($escolas);
 
 <!DOCTYPE html>
 
-<html lang="PT-BR">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">

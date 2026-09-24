@@ -70,7 +70,7 @@ FROM Trabalhos t
 LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
 LEFT JOIN Jurados j ON t.id_jurados = j.id_jurados
 LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
-LEFT JOIN Categoria_escolas ce ON t.id_categoria = ce.id
+LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
 LEFT JOIN Areas a ON t.id_areas = a.id_area
 ORDER BY t.id_trabalhos DESC";
 
@@ -99,6 +99,11 @@ $total_trabalhos = $stmt->fetch(PDO::FETCH_ASSOC)['total_trabalhos'];
 
 $stmt = $pdo->query("SELECT COUNT(*) AS total_jurados FROM Jurados");
 $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
+
+$trabalhosCadastrados = $pdo->query("SELECT id_escolas, id_areas, titulo FROM Trabalhos")->fetchAll(PDO::FETCH_ASSOC);
+
+$stmtModalidade = $pdo->prepare("SELECT * FROM Categoria_escolas WHERE id = ?");
+$categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
 
 ?>
 <!DOCTYPE html>
@@ -187,7 +192,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
               <form method="POST" action="../php/Cadescola.php" id="idCadEscola">
 
                 <label for="instituicao-categoria" class="form-label mt-2">Modalidade da instituição</label>
-                <select id="instituicao-categoria" class="form-control" name="categoriaEscola">
+                <select id="instituicao-categoria" class="form-control" name="categoriaEscola" required>
                   <option selected disabled>Selecione...</option>
                   <option value="1">EEEP</option>
                   <option value="2">EEMTI</option>
@@ -531,12 +536,11 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
         ];
         $criteriosDesempate = [1, 2, 4, 3, 5, 6, 7, 8, 9];
 
-        $sql = "SELECT t.id_trabalhos, t.titulo, e.nome AS escola, e.focalizada, e.ide, c.nome_categoria AS categoria, e.focalizada, e.ide, ce.categoria_da_escola AS categoria_escolas, a.nome_area AS area";
-        $sql = "SELECT t.id_trabalhos, t.titulo, e.nome AS escola, e.focalizada, e.ide, e.IDEB, e.total_trabalhos, c.nome_categoria AS categoria, a.nome_area AS area
+        $sql = "SELECT t.id_trabalhos, t.titulo, e.nome AS escola, e.focalizada, e.ide, e.IDEB, e.total_trabalhos,ce.categoria_da_escola, c.nome_categoria AS categoria, a.nome_area AS area
     FROM Trabalhos t 
     LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas 
     LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria 
-    LEFT JOIN Categoria_escolas ce ON t.id_categoria = ce.id
+    LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
     LEFT JOIN Areas a ON t.id_areas = a.id_area 
     WHERE 1=1";
         $params = [];
@@ -617,6 +621,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
             'total_trabalhos' => $row['total_trabalhos'] ?? '-',
             'categoria' => $row['categoria'],
             'area' => $row['area'],
+            'Modalidade' => $row['categoria_da_escola'],
             'jurados' => [
               1 => [
                 'id' => $jurados[0] ?? null,
@@ -733,7 +738,7 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
                   echo '<tr>';
                   echo '<td class="text-center"><span class="rank-badge">' . $posicao . 'º</span></td>';
                   echo '<td class="text-start td-item-title">' . htmlspecialchars($trab['titulo']) . '</td>';
-                  echo '<td class="text-start">' . htmlspecialchars($trab['escola']) . '</td>';
+                  echo '<td class="text-start">'. $trab['Modalidade'] . ' ' . htmlspecialchars($trab['escola']) . '</td>';
                   echo '<td><span class="category-pill">' . htmlspecialchars($trab['categoria']) . '</span></td>';
                   echo '<td>' . htmlspecialchars($trab['area'] ?? 'Sem área') . '</td>';
                   echo '<td class="fw-semibold">' . (
@@ -888,6 +893,54 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
         $(this).text('Desmarcar Todos');
       }
     });
+
+    const trabalhosCadastrados = <?= json_encode($trabalhosCadastrados, JSON_UNESCAPED_UNICODE) ?>;
+
+$('#idCadTrabalho').submit(function(event) {
+    const escola = $('#escola').val();
+    const categoria = $('#trabalho-categoria').val();
+    const area = $('#trabalho-area').is(':visible') ? $('#trabalho-area select[name="area"]').val() : $('#trabalho-area2 select[name="area"]').val();
+    const titulo = $('#trabalho-titulo').val().trim().toLowerCase();
+
+    if (!escola || !area || !titulo) {
+        return;
+    }
+
+    const mesmoTrabalho = trabalhosCadastrados.some(function(trabalho) {
+        return String(trabalho.id_escolas) === String(escola) &&
+               String(trabalho.id_areas) === String(area) &&
+               trabalho.titulo.trim().toLowerCase() === titulo;
+    });
+
+    if (mesmoTrabalho) {
+        event.preventDefault();
+        alert('Esta escola já possui um trabalho nesta área.');
+        return;
+    }
+
+    const trabalhoEmOutraArea = trabalhosCadastrados.some(function(trabalho) {
+        return String(trabalho.id_escolas) === String(escola) &&
+               trabalho.titulo.trim().toLowerCase() === titulo &&
+               String(trabalho.id_areas) !== String(area);
+    });
+
+    if (trabalhoEmOutraArea) {
+        event.preventDefault();
+        alert('Este trabalho já está cadastrado em outra área.');
+        return;
+    }
+
+    const escolaNaArea = trabalhosCadastrados.some(function(trabalho) {
+        return String(trabalho.id_escolas) === String(escola) &&
+               String(trabalho.id_areas) === String(area);
+    });
+
+    if (escolaNaArea) {
+        event.preventDefault();
+        alert('Esta escola já possui um trabalho cadastrado nesta área.');
+        return;
+    }
+});
 
     $(document).ready(function() {
       $('#associar-categoria').on('change', function() {

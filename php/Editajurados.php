@@ -71,7 +71,7 @@ if (isset($categoriasAreas[1])) {
             margin: 40px;
         }
     </style>
-    
+
     <div class="modal-body">
         <h5 class="modal-title" id="modalJuradoLabel">Editar Jurado</h5>
         <form action="../php/Atualizajurados.php" method="POST" id="idCadJurado">
@@ -146,7 +146,8 @@ if (isset($categoriasAreas[1])) {
 
 
             <input type="submit" value="Atualizar" class="btn btn-success mt-3" style="margin-top:10px;">
-            <a href="../html/admin-escolas.php" class="btn btn-secondary mt-3">Cancelar</a>
+            <button type="button" id="btnResetarSenha" class="btn btn-danger mt-3" style="margin-top:10px;">Resetar senha</button>
+            <a href="../html/admin-jurados.php" class="btn btn-secondary mt-3">Cancelar</a>
         </form>
     </div>
     <div class="modal-footer">
@@ -249,6 +250,38 @@ if (isset($categoriasAreas[1])) {
 
             $("#categoria1").change(() => toggleArea("categoria1", "area1-container"));
             $("#categoria2").change(() => toggleArea("categoria2", "area2-container"));
+        });
+
+        $('#btnResetarSenha').click(function() {
+            const idJurado = $('input[name="id"]').val();
+            if (!confirm('Tem certeza que deseja resetar a senha deste jurado?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '../php/ResetarSenha.php',
+                type: 'POST',
+                data: {
+                    id_jurados: idJurado
+                },
+                dataType: 'json',
+
+                success: function(response) {
+                    if (response.status === 'sucesso') {
+                        alert(
+                            'Senha resetada com sucesso!\n\n' +
+                            'Senha temporária: ' + response.senha_temporaria
+                        );
+                    } else {
+                        alert(response.mensagem || 'Não foi possível resetar a senha.');
+                    }
+                },
+
+                error: function() {
+                    alert('Erro ao tentar resetar a senha.');
+                }
+            });
+
         });
     </script>
 </body>
