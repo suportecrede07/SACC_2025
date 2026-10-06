@@ -161,110 +161,138 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
           <p class="page-subtitle">Escolha uma das opções abaixo para realizar cadastros ou acompanhar as métricas em tempo real.</p>
         </div>
       </div>
+      <?php if ($_SESSION['Nivel_permissao'] === 0): ?>
 
-      <div class="d-flex flex-wrap gap-2 mb-4">
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalInstituicao">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-          Cadastrar Instituição
-        </button>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalJurado">
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalInstituicao">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            Cadastrar Instituição
+          </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalJurado">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <path d="M20 8v6M23 11h-6" />
+            </svg>
+            Cadastrar Jurado
+          </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalTrabalho">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Cadastrar Trabalho
+          </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalAssociacao">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            Associar Jurado
+          </button>
+        </div>
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuario" style="background-color: lightgreen; color: black;">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
             <circle cx="8.5" cy="7" r="4" />
             <path d="M20 8v6M23 11h-6" />
           </svg>
-          Cadastrar Jurado
+          Cadastrar Usuario
         </button>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalTrabalho">
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar" style="background-color: lightsalmon; color: black;">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="8.5" cy="7" r="4" />
+            <path d="M20 8v6M23 11h-6" />
           </svg>
-          Cadastrar Trabalho
+          Editar Usuario
         </button>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalAssociacao">
+        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioExcluir" style="background-color: lightcoral; color: black;">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="8.5" cy="7" r="4" />
+            <path d="M20 8v6M23 11h-6" />
           </svg>
-          Associar Jurado
+          Apagar Usuarios
         </button>
-      </div>
-      <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="modalInstituicaoLabel">Cadastrar Instituição</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-              <form method="POST" action="../php/Cadescola.php" id="idCadEscola">
+        <br>
+        <br>
+        <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
+          aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalInstituicaoLabel">Cadastrar Instituição</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+              </div>
+              <div class="modal-body">
+                <form method="POST" action="../php/Cadescola.php" id="idCadEscola">
 
-                <label for="instituicao-categoria" class="form-label mt-2">Modalidade da instituição</label>
-                <select id="instituicao-categoria" class="form-control" name="categoriaEscola" required>
-                  <option selected disabled>Selecione...</option>
-                  <option value="1">EEEP</option>
-                  <option value="2">EEMTI</option>
-                  <option value="3">EEM</option>
-                  <option value="4">EEMPC</option>
-                  <option value="5">CEJA</option>
-                  <option value="6">INDÍGENA</option>
-                  <option value="7">Municipal</option>
-                  <option value="7">Colégio</option>
-                </select>
-
-                <div id="campo-digitacaoEscola" style="display:none;">
-                  <label for="instituicao-nome" class="form-label">Nome da Instituição</label>
-                  <input type="text" id="instituicao-nome" class="form-control" name="nome"
-                    placeholder="Digite o nome da instituição" required>
-                </div>
-
-                <input type="hidden" name="categoria_escolas" id="categoria_escolas">
-
-                <label for="instituicao-localidade" class="form-label mt-2">Município</label>
-                <select id="instituicao-localidade" class="form-control" name="municipio">
-                  <option selected disabled>Selecione...</option>
-                  <option value="1">Caridade</option>
-                  <option value="2">Canindé</option>
-                  <option value="3">Paramoti</option>
-                  <option value="4">General Sampaio</option>
-                  <option value="5">Santa Quitéria</option>
-                  <option value="6">Itatira</option>
-                </select>
-
-                <label for="instituicao-tipo" class="form-label mt-2">Tipo</label>
-                <select id="instituicao-tipo" class="form-control" name="focalizada">
-                  <option selected disabled>Selecione...</option>
-                  <option value="1">Focalizado</option>
-                </select>
-
-                <div id="campo-ide" style="display:none;">
-                  <label for="instituicao-ide" class="form-label mt-2">IDE Médio da Escola</label>
-                  <select id="instituicao-ide" class="form-control" name="ide">
+                  <label for="instituicao-categoria" class="form-label mt-2">Modalidade da instituição</label>
+                  <select id="instituicao-categoria" class="form-control" name="categoriaEscola" required>
                     <option selected disabled>Selecione...</option>
-                    <option value="1">Sim</option>
+                    <option value="1">EEEP</option>
+                    <option value="2">EEMTI</option>
+                    <option value="3">EEM</option>
+                    <option value="4">EEMPC</option>
+                    <option value="5">CEJA</option>
+                    <option value="6">INDÍGENA</option>
+                    <option value="7">Municipal</option>
+                    <option value="7">Colégio</option>
                   </select>
-                </div>
 
-                <div id="campo-IDEB">
-                  <label for="instituicao-ideb" class="form-label mt-2">IDEB</label>
-                  <input type="number" id="instituicao-ideb" class="form-control" step="0.1" name="IDEB" placeholder="Insira...">
-                </div>
-                <div id="campo-total_trabalhos">
-                  <label for="instituicao-total_trabalhos" class="form-label mt-2">Quantidade de trabalhos na etapa escolar</label>
-                  <input type="number" id="instituicao-total_trabalhos" class="form-control" step="1" name="total_trabalhos" placeholder="Insira...">
-                </div>
+                  <div id="campo-digitacaoEscola" style="display:none;">
+                    <label for="instituicao-nome" class="form-label">Nome da Instituição</label>
+                    <input type="text" id="instituicao-nome" class="form-control" name="nome"
+                      placeholder="Digite o nome da instituição" required>
+                  </div>
 
-                <input type="submit" value="Enviar" class="btn btn-success mt-3">
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                  <input type="hidden" name="categoria_escolas" id="categoria_escolas">
+
+                  <label for="instituicao-localidade" class="form-label mt-2">Município</label>
+                  <select id="instituicao-localidade" class="form-control" name="municipio">
+                    <option selected disabled>Selecione...</option>
+                    <option value="1">Caridade</option>
+                    <option value="2">Canindé</option>
+                    <option value="3">Paramoti</option>
+                    <option value="4">General Sampaio</option>
+                    <option value="5">Santa Quitéria</option>
+                    <option value="6">Itatira</option>
+                  </select>
+
+                  <label for="instituicao-tipo" class="form-label mt-2">Tipo</label>
+                  <select id="instituicao-tipo" class="form-control" name="focalizada">
+                    <option selected disabled>Selecione...</option>
+                    <option value="1">Focalizado</option>
+                  </select>
+
+                  <div id="campo-ide" style="display:none;">
+                    <label for="instituicao-ide" class="form-label mt-2">IDE Médio da Escola</label>
+                    <select id="instituicao-ide" class="form-control" name="ide">
+                      <option selected disabled>Selecione...</option>
+                      <option value="1">Sim</option>
+                    </select>
+                  </div>
+
+                  <div id="campo-IDEB">
+                    <label for="instituicao-ideb" class="form-label mt-2">IDEB</label>
+                    <input type="number" id="instituicao-ideb" class="form-control" step="0.1" name="IDEB" placeholder="Insira...">
+                  </div>
+                  <div id="campo-total_trabalhos">
+                    <label for="instituicao-total_trabalhos" class="form-label mt-2">Quantidade de trabalhos na etapa escolar</label>
+                    <input type="number" id="instituicao-total_trabalhos" class="form-control" step="1" name="total_trabalhos" placeholder="Insira...">
+                  </div>
+
+                  <input type="submit" value="Enviar" class="btn btn-success mt-3">
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      <?php endif; ?>
 
       <div class="modal fade" id="modalJurado" tabindex="-1" aria-labelledby="modalJuradoLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -355,6 +383,165 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
           </div>
         </div>
       </div>
+      <div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalJuradoLabel">Cadastrar Usuario</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <form action="../php/CadUsuario.php" method="POST" id="idCadUsuario">
+
+                <label for="usuario-cad-nome" class="form-label">Usuário</label>
+                <input type="text" id="usuario-cad-nome" class="form-control" name="usuario" placeholder="Digite o usuário" required>
+
+                <label for="usuario-cad-senha" class="form-label mt-2">Senha</label>
+                <input type="password" id="usuario-cad-senha" class="form-control" name="senha" placeholder="Digite a senha" required>
+
+                <label for="usuario-nivel" class="form-label mt-2">Nível de permissão</label>
+                <select id="usuario-nivel" class="form-control" name="Nivel_permissao" required>
+                  <option value="" selected disabled>Selecione...</option>
+                  <option value="0">ADMINISTRATIVO</option>
+                  <option value="1">PADRÃO</option>
+                </select>
+
+                <input type="submit" value="Enviar" class="btn btn-success" style="margin-top:10px;">
+
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="modalUsuarioEditar" tabindex="-1" aria-labelledby="modalUsuarioEditarLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalUsuarioEditarLabel">Editar Usuário</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <form action="../php/EditarUsuario.php" method="POST" id="formEditarUsuario">
+                <label for="usuario-atual" class="form-label">Usuário atual</label>
+                <select id="usuario-atual" class="form-control" name="usuario_atual" required>
+                  <option value="" selected disabled>Selecione o usuário...</option>
+
+                  <?php
+                  $stmtUsuarios = $pdo->query("SELECT usuario FROM administracao ORDER BY usuario ASC");
+                  while ($usuario = $stmtUsuarios->fetch(PDO::FETCH_ASSOC)) {
+                    echo '<option value="' . htmlspecialchars($usuario['usuario']) . '">'
+                      . htmlspecialchars($usuario['usuario'])
+                      . '</option>';
+                  }
+                  ?>
+                </select>
+
+                <label for="novo-usuario" class="form-label mt-2">Novo usuário</label>
+
+                <input
+                  type="text"
+                  id="novo-usuario"
+                  class="form-control"
+                  name="novo_usuario"
+                  placeholder="Digite o novo usuário"
+                  required>
+
+                <label for="nova-senha" class="form-label mt-2">Nova senha</label>
+
+                <input
+                  type="password"
+                  id="nova-senha"
+                  class="form-control"
+                  name="nova_senha"
+                  placeholder="Digite a nova senha"
+                  required>
+
+                <label for="novo-nivel" class="form-label mt-2">Nível de permissão</label>
+
+                <select
+                  id="novo-nivel"
+                  class="form-control"
+                  name="novo_nivel"
+                  required>
+                  <option value="" selected disabled>Selecione...</option>
+                  <option value="0">ADMINISTRATIVO</option>
+                  <option value="1">PADRÃO</option>
+                </select>
+
+                <input
+                  type="submit"
+                  value="Salvar alterações"
+                  class="btn btn-success"
+                  style="margin-top:10px;">
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="modalUsuarioExcluir" tabindex="-1" aria-labelledby="modalUsuarioExcluirLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalUsuarioExcluirLabel">Excluir Usuário</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <form action="../php/ExcluirUsuario.php" method="POST" id="idExcluirUsuario">
+                <label for="usuario-excluir" class="form-label">
+                  Selecione o usuário
+                </label>
+                <select id="usuario-excluir" class="form-control" name="id_admin" required>
+                  <option value="" selected disabled>
+                    Selecione...
+                  </option>
+                  <?php
+                  $stmtUsuarios = $pdo->query("
+                            SELECT id_admin, usuario
+                            FROM administracao
+                            ORDER BY usuario ASC
+                        ");
+
+                  $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+                  foreach ($usuarios as $usuario):
+                  ?>
+                    <option value="<?= htmlspecialchars($usuario['id_admin']) ?>">
+                      <?= htmlspecialchars($usuario['usuario']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <div class="alert alert-warning mt-3">
+                  <strong>Atenção!</strong>
+                  Essa ação excluirá permanentemente o usuário selecionado.
+                </div>
+                <input
+                  type="submit"
+                  value="Excluir Usuário"
+                  class="btn btn-danger"
+                  style="margin-top:10px;">
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="modal fade" id="modalTrabalho" tabindex="-1" aria-labelledby="modalTrabalhoLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -372,7 +559,7 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
                   <option value="">Selecione a Escola</option>
                   <?php foreach ($escolas as $escola): ?>
                     <option value="<?= htmlspecialchars($escola['id_escolas']) ?>">
-                      <?= $escola['categoria_escola'] . " ".  htmlspecialchars($escola['nome']) ?>
+                      <?= $escola['categoria_escola'] . " " .  htmlspecialchars($escola['nome']) ?>
                     </option>
                   <?php endforeach; ?>
                 </select>

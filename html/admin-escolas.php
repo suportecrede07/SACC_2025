@@ -105,52 +105,54 @@ $total_escolas = count($escolas);
             <p class="page-subtitle">Gerencie e visualize as instituições de ensino cadastradas no sistema</p>
 
             <!-- este realiza o processo de importar o arquivp (finalizado) -->
-     <form action="../pdf/importar_arquivoCSV_escolas.php" method="POST" enctype="multipart/form-data">
-        <br>
-        <p style="margin-bottom: 0px;"><b>Cadratrar Jurados, importando os dados:</b></p>
-        <div style="display: flex; align-items: center; flex-direction: row;">
-          <input type="file" name="meu_arquivo" id="meu_arquivo" required style="display: none;" required>
-          <label for="meu_arquivo" class="botao-arquivo" id="EscolherArquivo">Escolha um Arquivo</label>
-          <span id="nome-arquivo" style="margin-left: 5px; font-family: sans-serif; color: #333;">Nenhum arquivo selecionado </span>
+            <?php if($_SESSION['Nivel_permissao'] === 0): ?>
+                <form action="../pdf/importar_arquivoCSV_escolas.php" method="POST" enctype="multipart/form-data">
+                    <br>
+                    <p style="margin-bottom: 0px;"><b>Cadratrar Jurados, importando os dados:</b></p>
+                    <div style="display: flex; align-items: center; flex-direction: row;">
+                        <input type="file" name="meu_arquivo" id="meu_arquivo" required style="display: none;" required>
+                        <label for="meu_arquivo" class="botao-arquivo" id="EscolherArquivo">Escolha um Arquivo</label>
+                        <span id="nome-arquivo" style="margin-left: 5px; font-family: sans-serif; color: #333;">Nenhum arquivo selecionado </span>
+                    </div>
+                    <button type="submit" class="botao-arquivo" id="importar">Importar</button>
+                </form>
+            <?php endif; ?>
         </div>
-        <button type="submit" class="botao-arquivo" id="importar">Importar</button>
-      </form>
-    </div>
-    </div>
+        </div>
 
-    <script>
-      document.getElementById('meu_arquivo').addEventListener('change', function() {
-        var nomeArquivo = this.files[0] ? this.files[0].name : "Nenhum arquivo selecionado";
-        document.getElementById('nome-arquivo').textContent = nomeArquivo;
-      });
-    </script>
+        <script>
+            document.getElementById('meu_arquivo').addEventListener('change', function() {
+                var nomeArquivo = this.files[0] ? this.files[0].name : "Nenhum arquivo selecionado";
+                document.getElementById('nome-arquivo').textContent = nomeArquivo;
+            });
+        </script>
 
-    <style>
-      .botao-arquivo {
-        background-color: #63aa65;
-        border: 2px solid #86efac;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        display: inline-block;
-        font-family: sans-serif;
-        transition: background-color 0.3s;
-      }
+        <style>
+            .botao-arquivo {
+                background-color: #63aa65;
+                border: 2px solid #86efac;
+                color: white;
+                padding: 5px 12px;
+                border-radius: 5px;
+                cursor: pointer;
+                display: inline-block;
+                font-family: sans-serif;
+                transition: background-color 0.3s;
+            }
 
-      .botao-arquivo:hover {
-        background-color: #45a0498f;
-      }
+            .botao-arquivo:hover {
+                background-color: #45a0498f;
+            }
 
-      #EscolherArquivo{
-        margin-top: 5px;
-      }
+            #EscolherArquivo {
+                margin-top: 5px;
+            }
 
-      #importar {
-        background-color: #fcb42d;
-        border: 2px solid #efeb86;
-      }
-    </style>
+            #importar {
+                background-color: #fcb42d;
+                border: 2px solid #efeb86;
+            }
+        </style>
         </div>
 
         <div class="admin-card-table">
@@ -164,7 +166,11 @@ $total_escolas = count($escolas);
                             <th>IDE MÉDIO</th>
                             <th>IDEB</th>
                             <th>Total de trabalhos na fase escolar</th>
-                            <th class="text-center pe-4">AÇÕES</th>
+                            <?php
+                            if ($_SESSION['Nivel_permissao'] === 0) {
+                                echo '<th class="text-center pe-4">AÇÕES</th>';
+                            }
+                            ?>
                         </tr>
                     </thead>
 
@@ -177,28 +183,31 @@ $total_escolas = count($escolas);
                                     <td>
                                         <span class="category-pill"><?= htmlspecialchars($user_data['focalizada'] ?? '-') ?></span>
                                     </td>
-                                    <td ><?= !empty($user_data['ide']) ? htmlspecialchars($user_data['ide']) : '—' ?></td>
+                                    <td><?= !empty($user_data['ide']) ? htmlspecialchars($user_data['ide']) : '—' ?></td>
                                     <td class="fw-bold text-dark"><?= !empty($user_data['IDEB']) ? htmlspecialchars($user_data['IDEB']) : '—' ?></td>
                                     <td class="fw-bold text-dark"><?= !empty($user_data['total_trabalhos']) ? htmlspecialchars($user_data['total_trabalhos']) : '—' ?></td>
+                                    <?php
+                                    if ($_SESSION['Nivel_permissao'] === 0) {
+                                        echo '<td class="text-center pe-4 text-nowrap">
+                                            <div class="d-inline-flex gap-2">
 
-                                    <td class="text-center pe-4 text-nowrap">
-                                        <div class="d-inline-flex gap-2">
+                                                <a href="../php/Editaescolas.php?id=' . $user_data['id_escolas'] . '" class="btn-action-edit" title="Editar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-1 3a.5.5 0 0 0 .606.606l3-1a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5z" />
+                                                    </svg>
+                                                </a>
 
-                                            <a href="../php/Editaescolas.php?id=<?= $user_data['id_escolas'] ?>" class="btn-action-edit" title="Editar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-1 3a.5.5 0 0 0 .606.606l3-1a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                                                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5z" />
-                                                </svg>
-                                            </a>
+                                                <a href="../php/Excluirescolas.php?id=' . $user_data['id_escolas'] . '" class="btn-action-delete" onclick="return confirm(\'Tem certeza que deseja excluir esta escola?\');" title="Excluir">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.06a.5.5 0 0 0-.998.06l.5 8.5a.5.5 0 1 0 .998-.06z" />
+                                                    </svg>
+                                                </a>
 
-                                            <a href="../php/Excluirescolas.php?id=<?= $user_data['id_escolas'] ?>" class="btn-action-delete" onclick="return confirm('Tem certeza que deseja excluir esta escola?');" title="Excluir">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                    <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.06a.5.5 0 0 0-.998.06l.5 8.5a.5.5 0 1 0 .998-.06z" />
-                                                </svg>
-                                            </a>
-
-                                        </div>
-                                    </td>
+                                            </div>
+                                        </td>';
+                                    }
+                                    ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -213,10 +222,12 @@ $total_escolas = count($escolas);
     </main>
 
     <style>
-        #nome_escolas{
+        #nome_escolas {
             text-align: left;
         }
-        th,td{
+
+        th,
+        td {
             text-align: center;
         }
     </style>

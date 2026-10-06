@@ -1,6 +1,5 @@
 <?php
-
-require_once '../php/Connect.php';
+require_once __DIR__ . '/restricaoDeUsuario.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die('Método inválido.');
 }

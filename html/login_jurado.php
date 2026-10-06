@@ -157,7 +157,7 @@ if (isset($_SESSION['login_error'])) {
             <div id="modalError" class="alert alert-danger p-2 mb-3" style="display: none; font-size: 0.85rem;"></div>
 
             <button type="submit" id="btnSalvarNovaSenha" class="btn-login w-100 mt-2">
-              Salvar Nova
+              Salvar Nova Senha
             </button>
           </form>
         </div>

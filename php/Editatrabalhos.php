@@ -1,10 +1,5 @@
 <?php
-require_once '../php/Connect.php';
-
-$id = $_GET['id'] ?? null;
-if (!$id) {
-    die('ID não fornecido');
-}
+require_once __DIR__ . '/restricaoDeUsuario.php';
 
 $stmt = $pdo->prepare("
     SELECT 

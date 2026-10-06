@@ -1,6 +1,5 @@
 <?php
-
-require_once '../php/Connect.php';
+require_once __DIR__ . '/restricaoDeUsuario.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
@@ -81,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $stmt = $pdo->prepare("
             INSERT INTO Trabalhos
-            (titulo, id_escolas, id_jurados, id_areas, id_categoria, ord'em)
+            (titulo, id_escolas, id_jurados, id_areas, id_categoria, ordem)
             VALUES (?, ?, ?, ?, ?, ?)
         ");
 

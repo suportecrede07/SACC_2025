@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $usuario = $_POST['usuario'];
     $senha = $_POST['senha'];
-
+    
     try {
         $stmt = $pdo->prepare("SELECT * FROM Administracao WHERE usuario = :usuario LIMIT 1");
         $stmt->execute([':usuario' => $usuario]);
@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($login_sucesso) {
                 $_SESSION['id_admin'] = $user['id_admin'];
                 $_SESSION['usuario'] = $user['usuario'];
+                $_SESSION['Nivel_permissao'] = $user['Nivel_permissao'];
                 header('Location: ../html/admin-dashboard.php');
                 exit();
             }

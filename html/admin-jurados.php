@@ -92,16 +92,18 @@ $total_jurados = count($jurados);
       <p class="page-subtitle">Gerencie os avaliadores científicos e suas comissões atribuídas</p>
      
       <!-- este realiza o processo de importar o arquivp (finalizado) -->
-     <form action="../pdf/importar_arquivoCSV_trabalhos.php" method="POST" enctype="multipart/form-data">
-        <br>
-        <p style="margin-bottom: 0px;"><b>Cadratrar Jurados, importando os dados:</b></p>
-        <div style="display: flex; align-items: center; flex-direction: row;">
-          <input type="file" name="meu_arquivo" id="meu_arquivo" required style="display: none;" required>
-          <label for="meu_arquivo" class="botao-arquivo" id="EscolherArquivo">Escolha um Arquivo</label>
-          <span id="nome-arquivo" style="margin-left: 5px; font-family: sans-serif; color: #333;">Nenhum arquivo selecionado </span>
-        </div>
-        <button type="submit" class="botao-arquivo" id="importar">Importar</button>
-      </form>
+       <?php if($_SESSION['Nivel_permissao'] === 0): ?>
+        <form action="../pdf/importar_arquivoCSV_trabalhos.php" method="POST" enctype="multipart/form-data">
+           <br>
+           <p style="margin-bottom: 0px;"><b>Cadratrar Jurados, importando os dados:</b></p>
+           <div style="display: flex; align-items: center; flex-direction: row;">
+             <input type="file" name="meu_arquivo" id="meu_arquivo" required style="display: none;" required>
+             <label for="meu_arquivo" class="botao-arquivo" id="EscolherArquivo">Escolha um Arquivo</label>
+             <span id="nome-arquivo" style="margin-left: 5px; font-family: sans-serif; color: #333;">Nenhum arquivo selecionado </span>
+           </div>
+           <button type="submit" class="botao-arquivo" id="importar">Importar</button>
+         </form>
+      <?php endif; ?>
     </div>
     </div>
 
@@ -137,6 +139,10 @@ $total_jurados = count($jurados);
         background-color: #fcb42d;
         border: 2px solid #efeb86;
       }
+
+      th{
+        text-align: center
+      }
     </style>
 
     <!-- Tabela de jurados em Card Nítido sem rolagem -->
@@ -156,7 +162,11 @@ $total_jurados = count($jurados);
               <th>CATEGORIA 2</th>
               <th>ÁREA 2</th>
               <th>STATUS</th>
-              <th class="text-center pe-3">AÇÕES</th>
+              <?php 
+              if($_SESSION['Nivel_permissao'] === 0){
+                echo '<th class="text-center pe-3">AÇÕES</th>';
+              }
+              ?>
             </tr>
           </thead>
           <tbody>
@@ -230,21 +240,25 @@ $total_jurados = count($jurados);
                       <?php endif; ?>
                     </div>
                   </td>
-                  <td class="text-center pe-3">
-                    <div class="d-inline-flex gap-1">
-                      <a href="../php/Editajurados.php?id=<?= urlencode($user_data['id_jurados']) ?>" class="btn-action-edit" title="Editar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-1 3a.5.5 0 0 0 .606.606l3-1a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5z" />
-                        </svg>
-                      </a>
-                      <a href="../php/Excluirjurados.php?id=<?= urlencode($user_data['id_jurados']) ?>" class="btn-action-delete" onclick="return confirm('Tem certeza que deseja excluir este jurado?');" title="Excluir">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.06a.5.5 0 0 0-.998.06l.5 8.5a.5.5 0 1 0 .998-.06z" />
-                        </svg>
-                      </a>
-                    </div>
-                  </td>
+
+                  <?php if($_SESSION['Nivel_permissao'] === 0): ?>
+                    <td class="text-center pe-3">
+                      <div class="d-inline-flex gap-1">
+                        <a href="../php/Editajurados.php?id=<?= urlencode($user_data['id_jurados']) ?>" class="btn-action-edit" title="Editar">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-1 3a.5.5 0 0 0 .606.606l3-1a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h6a.5.5 0 0 0 0-1h-6A1.5 1.5 0 0 0 1 2.5z" />
+                          </svg>
+                        </a>
+                        <a href="../php/Excluirjurados.php?id=<?= urlencode($user_data['id_jurados']) ?>" class="btn-action-delete" onclick="return confirm('Tem certeza que deseja excluir este jurado?');" title="Excluir">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.06a.5.5 0 0 0-.998.06l.5 8.5a.5.5 0 1 0 .998-.06z" />
+                          </svg>
+                        </a>
+                      </div>
+                    </td>
+                  <?php endif; ?>
+
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
