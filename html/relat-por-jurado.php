@@ -27,7 +27,7 @@ $avaliacoesQuery = $pdo->prepare("
     JOIN Trabalhos T ON A.id_trabalho = T.id_trabalhos
     JOIN Escolas E ON T.id_escolas = E.id_escolas
     WHERE A.id_jurado = ?
-    ORDER BY T.id_trabalhos, A.criterio
+    ORDER BY T.ordem
 ");
 $avaliacoesQuery->execute([$id_jurado]);
 $avaliacoesRaw = $avaliacoesQuery->fetchAll(PDO::FETCH_ASSOC);

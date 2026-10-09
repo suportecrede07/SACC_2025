@@ -312,7 +312,9 @@ ob_start();
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
     <div class="header-title">RESULTADO FINAL</div>
     <div class="sub-title">CATEGORIA: <?= htmlspecialchars($categoriaNome) ?></div>
-    <div class="sub-title">ÁREA: <?= htmlspecialchars($areaNome) ?></div>
+    <?php if($categoriaNome !== 'Pesquisa Júnior') :?>
+      <div class="sub-title">ÁREA: <?= htmlspecialchars($areaNome) ?></div>
+    <?php endif; ?>
   </div>
 
   <div class="table-container">

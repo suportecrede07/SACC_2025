@@ -212,7 +212,9 @@ ob_start();
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
     <div class="header-title">PLANILHA DE AVALIAÇÃO DOS JURADOS</div>
     <div class="sub-title">CATEGORIA: <?= htmlspecialchars($categoria) ?></div>
-    <div class="sub-title">ÁREA: <?= htmlspecialchars($area) ?></div>
+    <?php if($categoria !== 'Pesquisa Júnior'): ?>
+      <div class="sub-title">ÁREA: <?= htmlspecialchars($area) ?></div>
+    <?php endif; ?>
   </div>
 
   <div class="table-container">

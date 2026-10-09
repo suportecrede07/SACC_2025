@@ -56,6 +56,7 @@ $trabalhos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $totalAtribuidos = count($trabalhos);
 $avaliados = 0;
 $grupos = [];
+$space = ' ';
 
 foreach ($trabalhos as $t) {
   if ($t['avaliacao_existente'] > 0) {
@@ -63,15 +64,25 @@ foreach ($trabalhos as $t) {
   }
   
   $idCat = $t['id_categoria'] ?? 0;
-  $idArea = $t['id_areas'] ?? 0;
-  $chave = $idCat . '_' . $idArea;
+
+if (mb_strtolower(trim($t['nome_categoria'] ?? ''), 'UTF-8') === 'pesquisa júnior') {
+    $idArea = 0;
+    $nomeArea = '';
+    $space = ' ';
+} else {
+    $idArea = $t['id_areas'] ?? 0;
+    $nomeArea = $t['nome_area'] ?? 'Geral';
+    $space = '-';
+}
+
+$chave = $idCat . '_' . $idArea;
   
   if (!isset($grupos[$chave])) {
     $grupos[$chave] = [
       'id_categoria' => $idCat,
       'id_area' => $idArea,
       'nome_categoria' => $t['nome_categoria'] ?? 'Geral',
-      'nome_area' => $t['nome_area'] ?? 'Geral',
+      'nome_area' => $nomeArea,
       'total' => 0,
       'avaliados' => 0,
       'finalizado' => in_array($chave, $finalizadasArray) || $avaliacoesFinalizadasRaw === '1'
@@ -155,11 +166,11 @@ $pendentes = $totalAtribuidos - $avaliados;
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                   <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l4.992-5.5a.75.75 0 0 0-.018-1.042z" />
                 </svg>
-                Finalizar Avaliação (<?= htmlspecialchars($grupo['nome_categoria']) ?> - <?= htmlspecialchars($grupo['nome_area']) ?>)
+                Finalizar Avaliação (<?= htmlspecialchars($grupo['nome_categoria']) ?> <?= $space ?> <?= htmlspecialchars($grupo['nome_area']) ?>)
               </button>
             <?php else: ?>
               <div class="alert alert-warning py-2 px-3 mb-0 d-inline-flex align-items-center gap-2 rounded-3 shadow-sm" style="font-size: 0.9rem; color: #9a3412; background-color: #ffedd5; border-color: #fed7aa; margin-bottom: 0;">
-                <span>Avaliação da <strong><?= htmlspecialchars($grupo['nome_categoria']) ?> — <?= htmlspecialchars($grupo['nome_area']) ?></strong> pendente (<?= $grupo['avaliados'] ?>/<?= $grupo['total'] ?>)</span>
+                <span>Avaliação da <strong><?= htmlspecialchars($grupo['nome_categoria']) ?> <?= $space ?> <?= htmlspecialchars($grupo['nome_area']) ?></strong> pendente (<?= $grupo['avaliados'] ?>/<?= $grupo['total'] ?>)</span>
               </div>
             <?php endif; ?>
           <?php endforeach; ?>
@@ -209,7 +220,7 @@ $pendentes = $totalAtribuidos - $avaliados;
                 <td class="td-titulo"><?= htmlspecialchars($trabalho['titulo']) ?></td>
                 <td class="td-escola"><?= $trabalho['categoria_escola'] . ' ' . htmlspecialchars($trabalho['nome_escola'] ?? 'N/D') ?></td>
                 <td class="td-categoria"><?= htmlspecialchars($trabalho['nome_categoria'] ?? 'N/D') ?></td>
-                <td class="td-area"><?= htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?></td>
+               <td class="td-area" style="text-align: center;"><?= mb_strtolower(trim($trabalho['nome_categoria'] ?? ''), 'UTF-8') === 'pesquisa júnior'? '—': htmlspecialchars($trabalho['nome_area'] ?? 'N/D') ?></td>
                 <td style="text-align: center;" class="td-area"><?= $trabalho['ordem'] ?? 0 ?></td>
                 <td style="text-align: center; vertical-align: middle;">
                   <?php if ($trabalho['avaliacao_existente'] == 0): ?>
