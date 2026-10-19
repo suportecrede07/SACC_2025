@@ -261,16 +261,18 @@ $trabalhos = $pdo->query("
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
           <div class="modal-body">
-            <label for="jurado-categoria">Categoria</label>
+            <label for="jurado-categoria">Categoria(se for Pesquisa Júnior)</label>
             <select id="jurado-categoria" class="form-select">
-              <option selected disabled>Selecione a Categoria</option>
+              <option value="1">Selecione a Categoria</option>
               <?php foreach ($categorias as $categoria): ?>
-                <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
-                  <?= htmlspecialchars($categoria['nome_categoria']) ?>
-                </option>
+                <?php if($categoria['id_categoria'] === 3): ?>
+                  <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
+                    <?= htmlspecialchars($categoria['nome_categoria']) ?>
+                  </option>
+                <?php endif; ?>
               <?php endforeach; ?>
             </select>
-            <div id="jurado-area" style="display:none; margin-top:10px;">
+            <div id="jurado-area" style="margin-top:10px;">
               <label for="jurado-area-select">Área</label>
               <select id="jurado-area-select" class="form-select">
                 <option selected disabled>Selecione a Área</option>
@@ -372,7 +374,7 @@ $trabalhos = $pdo->query("
           const area = $('#jurado-area-select').val() || $('#jurado-area2-select').val() || '';
           const id_jurado = $('#jurado-nome-select').val();
 
-          if (!categoria || !id_jurado) {
+          if (!id_jurado) {
             alert('Selecione todos os campos antes de gerar o relatório.');
             return;
           }

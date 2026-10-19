@@ -76,13 +76,15 @@ SELECT
     av.criterio,
     av.nota,
     c.nome_categoria AS categoria,
-    a.nome_area AS area
+    a.nome_area AS area,
+    ce.categoria_da_escola
 FROM Trabalhos t
 LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
 LEFT JOIN Avaliacoes av ON av.id_trabalho = t.id_trabalhos
 LEFT JOIN Jurados j ON j.id_jurados = av.id_jurado
 LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
 LEFT JOIN Areas a ON t.id_areas = a.id_area
+LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
 WHERE 1
 ";
 
@@ -115,6 +117,7 @@ foreach ($dados as $linha) {
 
   $trabalhos[$id]['titulo'] = $linha['titulo'];
   $trabalhos[$id]['escola'] = $linha['escola'];
+  $trabalhos[$id]['Modalidade'] = $linha['categoria_da_escola'];
   $trabalhos[$id]['categoria'] = $linha['categoria'] ?? 'Sem categoria';
   $trabalhos[$id]['area'] = $linha['area'] ?? 'Sem área';
 
@@ -240,7 +243,7 @@ ob_start();
       <tbody>
         <?php foreach ($trabalhos as $t): ?>
           <tr>
-            <td><?= htmlspecialchars($t['escola']) ?></td>
+            <td><?= htmlspecialchars($t['Modalidade']. " ". $t['escola']) ?></td>
             <td><?= htmlspecialchars($t['titulo']) ?></td>
             <?php
             $soma_ponderada = 0;

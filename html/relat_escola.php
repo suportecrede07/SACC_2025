@@ -141,10 +141,11 @@ function toBase64Image($path)
   return "data:image/$type;base64,$base64";
 }
 
-$stmtEsc = $pdo->prepare("SELECT nome FROM Escolas WHERE id_escolas = ?");
+$stmtEsc = $pdo->prepare("SELECT nome, ce.categoria_da_escola FROM Escolas e LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id WHERE id_escolas = ?");
 $stmtEsc->execute([$id_escola]);
 $result = $stmtEsc->fetch(PDO::FETCH_ASSOC);
 $userName = $result ? $result['nome'] : 'Escola';
+$Modalidade = $result ? $result['categoria_da_escola'] : 'Escola';
 
 $imgCearaCientifico = toBase64Image(__DIR__ . '/../assets/img/crede-ceara-cientifico-estado.png');
 $imgCrede7 = toBase64Image(__DIR__ . '/../assets/img/crede7.png');
@@ -227,7 +228,7 @@ ob_start();
 
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
     <div class="header-title">RELATÓRIO POR ESCOLA</div>
-    <div class="sub-title">ESCOLA: <?= htmlspecialchars($userName) ?></div>
+    <div class="sub-title">ESCOLA: <?=htmlspecialchars($Modalidade) ." ". htmlspecialchars($userName) ?></div>
   </div>
   <?php
   $sql_jurados = "SELECT DISTINCT j.usuario 

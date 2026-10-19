@@ -11,7 +11,15 @@ use Dompdf\Dompdf;
 $id_jurado = isset($_GET['id_jurado']) ? intval($_GET['id_jurado']) : 0;
 if ($id_jurado <= 0) die("ID do jurado inválido.");
 
-$juradoQuery = $pdo->prepare("SELECT nome FROM Jurados WHERE id_jurados = ?");
+$juradoQuery = $pdo->prepare(
+    "SELECT j.nome, ar.nome_area
+     FROM Jurados j
+     LEFT JOIN jurados_categorias_areas jcr
+        ON jcr.id_jurados = j.id_jurados
+     LEFT JOIN areas ar
+        ON ar.id_area = jcr.id_area
+     WHERE j.id_jurados = ?"
+);
 $juradoQuery->execute([$id_jurado]);
 $jurado = $juradoQuery->fetch(PDO::FETCH_ASSOC);
 if (!$jurado) die("Jurado não encontrado.");
@@ -22,10 +30,12 @@ $avaliacoesQuery = $pdo->prepare("
         T.titulo,
         E.nome AS escola,
         A.criterio,
-        A.nota
+        A.nota,
+        ce.categoria_da_escola
     FROM Avaliacoes A
     JOIN Trabalhos T ON A.id_trabalho = T.id_trabalhos
     JOIN Escolas E ON T.id_escolas = E.id_escolas
+    LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
     WHERE A.id_jurado = ?
     ORDER BY T.ordem
 ");
@@ -58,6 +68,7 @@ foreach ($avaliacoesRaw as $row) {
     $trabalhos[$id] = [
       'titulo' => $row['titulo'],
       'escola' => $row['escola'],
+      'Modalidade' => $row['categoria_da_escola'],
       'notas' => [],
       'ponderada_soma' => 0,
       'peso_total' => 0,
@@ -179,6 +190,11 @@ ob_start();
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
     <div class="header-title">PLANILHA DE AVALIAÇÃO POR JURADO</div>
     <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome']) ?></div>
+    <?php if($jurado['nome_area']): ?>
+      <div class="sub-title">ÁREA: <?= htmlspecialchars($jurado['nome_area']) ?></div>
+      <?php else: ?>
+        <div class="sub-title">Categoria: <?= htmlspecialchars('Pesquisa Júnior') ?></div>
+      <?php endif; ?>
   </div>
 
   <div class="table-container">
@@ -202,7 +218,7 @@ ob_start();
     <tbody>
       <?php foreach ($trabalhos as $t): ?>
         <tr>
-          <td><?= htmlspecialchars($t['escola']) ?></td>
+          <td><?= htmlspecialchars($t['Modalidade']) ." ". htmlspecialchars($t['escola']) ?></td>
           <td><?= htmlspecialchars($t['titulo']) ?></td>
           <?php
           for ($i = 1; $i <= 9; $i++) {
@@ -221,10 +237,6 @@ ob_start();
       <hr style="width: 40%;">
       <p>Avaliador(a)</p>
     </div>
-
-
-
-
 </body>
 
 </html>

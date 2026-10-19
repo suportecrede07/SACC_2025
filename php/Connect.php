@@ -1,5 +1,5 @@
 <?php
-$pdo = new PDO("mysql:host=localhost;dbname=SACC","root","cr701201");
+$pdo = new PDO("mysql:host=localhost;dbname=SACC","root","");
 
 try {
     $pdo -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
