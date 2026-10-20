@@ -64,7 +64,6 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
         continue;
       }
 
-      // Normaliza os caminhos das pastas e nomes de arquivos
       $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola));
       $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola)) . '_' : '';
       $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25)));

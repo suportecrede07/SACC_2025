@@ -61,7 +61,7 @@ try {
                 foreach ($juradosDoTrabalho as $j) {
                     $juradoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $j['nome']));
                     $nomeArquivoPdf = "Trabalho_" . $idTrabalho . "_" . $trabalhoSanitizado . "_Jurado_" . $juradoSanitizado . ".pdf";
-                    $caminhoNoZip = "pasta/" . $nomePastaEscola . "/" . $nomeArquivoPdf;
+                    $caminhoNoZip = "relatorio_por_escola/" . $nomePastaEscola . "/" . $nomeArquivoPdf;
 
                     $pdfConteudoReal = obterPdfComoString($pdo, $idTrabalho, $j['id_jurados']);
                     if (!empty($pdfConteudoReal)) {
