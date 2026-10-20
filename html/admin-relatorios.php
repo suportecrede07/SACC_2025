@@ -64,9 +64,9 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
         continue;
       }
 
-      $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola));
-      $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola)) . '_' : '';
-      $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25)));
+      $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola)));
+      $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola))) . '_' : '';
+      $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25))));
 
       $nomePastaEscola = $categoriaSanitizada . $escolaSanitizada;
 
@@ -77,7 +77,6 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
         $nomeArquivoPdf = "Trabalho_" . $idTrabalho . "_" . $trabalhoSanitizado . "_Jurado_" . $juradoSanitizado . ".pdf";
         $caminhoNoZip = "relatorio_por_escola/" . $nomePastaEscola . "/" . $nomeArquivoPdf;
 
-        // Chama a função externa coletando o PDF bruto em memória instantaneamente
         $pdfConteudoReal = obterPdfComoString($pdo, $idTrabalho, $idJurado);
 
         if (!empty($pdfConteudoReal)) {
@@ -88,7 +87,6 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
 
     $zip->close();
 
-    // Envia o ZIP completo e perfeitamente organizado
     if (file_exists($caminhoZip) && filesize($caminhoZip) > 22) {
       ob_end_clean();
 

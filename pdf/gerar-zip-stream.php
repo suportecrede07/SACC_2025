@@ -53,9 +53,9 @@ try {
             $juradosDoTrabalho = $stmtJurados->fetchAll(PDO::FETCH_ASSOC);
 
             if (!empty($juradosDoTrabalho)) {
-                $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola));
-                $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola)) . '_' : '';
-                $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25)));
+                $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola)));
+                $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola))) . '_' : '';
+                $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', str_replace(["'", "`", "´", "^", "~", "¨"], "", iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25))));
                 $nomePastaEscola = $categoriaSanitizada . $escolaSanitizada;
 
                 foreach ($juradosDoTrabalho as $j) {
