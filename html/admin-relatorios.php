@@ -4,6 +4,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once '../php/Connect.php';
+require_once '../pdf/gerar-pdf-string.php';
 
 $escolas = $pdo->query("SELECT e.id_escolas, e.nome, ce.categoria_da_escola FROM Escolas e LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id ORDER BY e.nome")->fetchAll(PDO::FETCH_ASSOC);
 $jurados = $pdo->query("SELECT id_jurados, nome FROM Jurados ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
@@ -26,6 +27,85 @@ $trabalhos = $pdo->query("
   LEFT JOIN Areas a ON t.id_areas = a.id_area
   ORDER BY t.ordem ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
+  set_time_limit(300); // Dá estabilidade e fôlego ao processamento no XAMPP
+  ob_start();
+
+  $nomeZip = "Fichas_Avaliacao_Escolas_" . time() . ".zip";
+  $caminhoZip = sys_get_temp_dir() . '/' . $nomeZip;
+
+  $zip = new ZipArchive();
+
+  if ($zip->open($caminhoZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+
+    foreach ($trabalhos as $t) {
+      $idTrabalho = $t['id_trabalhos'];
+      $nomeEscola = $t['escola'] ?? '';
+      $categoriaEscola = $t['categoria_da_escola'] ?? '';
+      $tituloTrabalho = $t['titulo'] ?? 'Trabalho';
+
+      if (empty($nomeEscola)) {
+        continue;
+      }
+
+      // Busca os jurados da tabela pivot validada por suas imagens
+      $stmtJurados = $pdo->prepare("
+                SELECT j.id_jurados, j.nome 
+                FROM Jurados j
+                INNER JOIN jurado_trabalho jt ON j.id_jurados = jt.id_jurado
+                WHERE jt.id_trabalho = :id_trabalho
+                ORDER BY j.nome
+            ");
+      $stmtJurados->execute(['id_trabalho' => $idTrabalho]);
+      $juradosDoTrabalho = $stmtJurados->fetchAll(PDO::FETCH_ASSOC);
+
+      if (empty($juradosDoTrabalho)) {
+        continue;
+      }
+
+      // Normaliza os caminhos das pastas e nomes de arquivos
+      $escolaSanitizada = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $nomeEscola));
+      $categoriaSanitizada = !empty($categoriaEscola) ? preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $categoriaEscola)) . '_' : '';
+      $trabalhoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', substr($tituloTrabalho, 0, 25)));
+
+      $nomePastaEscola = $categoriaSanitizada . $escolaSanitizada;
+
+      foreach ($juradosDoTrabalho as $j) {
+        $idJurado = $j['id_jurados'];
+        $juradoSanitizado = preg_replace('/[^A-Za-z0-9\-]/', '_', iconv('UTF-8', 'ASCII//TRANSLIT', $j['nome']));
+
+        $nomeArquivoPdf = "Trabalho_" . $idTrabalho . "_" . $trabalhoSanitizado . "_Jurado_" . $juradoSanitizado . ".pdf";
+        $caminhoNoZip = "relatorio_por_escola/" . $nomePastaEscola . "/" . $nomeArquivoPdf;
+
+        // Chama a função externa coletando o PDF bruto em memória instantaneamente
+        $pdfConteudoReal = obterPdfComoString($pdo, $idTrabalho, $idJurado);
+
+        if (!empty($pdfConteudoReal)) {
+          $zip->addFromString($caminhoNoZip, $pdfConteudoReal);
+        }
+      }
+    }
+
+    $zip->close();
+
+    // Envia o ZIP completo e perfeitamente organizado
+    if (file_exists($caminhoZip) && filesize($caminhoZip) > 22) {
+      ob_end_clean();
+
+      header('Content-Type: application/zip');
+      header('Content-Disposition: attachment; filename="' . $nomeZip . '"');
+      header('Content-Length: ' . filesize($caminhoZip));
+      header('Pragma: no-cache');
+      header('Expires: 0');
+
+      readfile($caminhoZip);
+      unlink($caminhoZip);
+      exit;
+    }
+  }
+  ob_end_clean();
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -126,20 +206,38 @@ $trabalhos = $pdo->query("
 
       <div class="d-flex flex-wrap gap-2 mb-4">
         <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalJurado">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="8.5" cy="7" r="4" />
+          </svg>
           Por Jurado
         </button>
         <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalAmbosJurados">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75M9 21v-2a4 4 0 00-3-3.87"/></svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75M9 21v-2a4 4 0 00-3-3.87" />
+          </svg>
           Ambos os Jurados
         </button>
         <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalPorEscola">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
           Por Escola
         </button>
         <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalRanking">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
           Ranking
+        </button>
+        <!-- Substitua o form do botão original por este botão abaixo: -->
+        <button type="button" class="admin-action-btn" style="background-color: #da281f;" onclick="gerarZipComProgresso()">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <path d="M14 2v6h6" />
+            <path d="M16 13H8M16 17H8M10 9H8" stroke-linecap="round" />
+          </svg>
+          Ficha de avaliação individual de todas as escolas(PDF)
         </button>
       </div>
 
@@ -187,132 +285,222 @@ $trabalhos = $pdo->query("
           </tbody>
         </table>
       </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const filtroEscola = document.getElementById("Filtro_escola");
-        const filtroCategoria = document.getElementById("Filtro_categoria");
-        const filtroArea = document.getElementById("Filtro_area");
-        const linhas = document.querySelectorAll("#workTable tbody tr");
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const filtroEscola = document.getElementById("Filtro_escola");
+          const filtroCategoria = document.getElementById("Filtro_categoria");
+          const filtroArea = document.getElementById("Filtro_area");
+          const linhas = document.querySelectorAll("#workTable tbody tr");
 
-        function filtrarTabela() {
-          const escolaSelecionada = filtroEscola.value.toLowerCase();
-          const categoriaSelecionada = filtroCategoria.options[filtroCategoria.selectedIndex].text.toLowerCase();
-          const areaSelecionada = filtroArea.value.toLowerCase();
+          function filtrarTabela() {
+            const escolaSelecionada = filtroEscola.value.toLowerCase();
+            const categoriaSelecionada = filtroCategoria.options[filtroCategoria.selectedIndex].text.toLowerCase();
+            const areaSelecionada = filtroArea.value.toLowerCase();
 
-          linhas.forEach(tr => {
-            const escola = tr.children[1].textContent.toLowerCase();
-            const categoria = tr.children[2].textContent.toLowerCase();
-            const area = tr.children[3].textContent.toLowerCase();
+            linhas.forEach(tr => {
+              const escola = tr.children[1].textContent.toLowerCase();
+              const categoria = tr.children[2].textContent.toLowerCase();
+              const area = tr.children[3].textContent.toLowerCase();
 
-            const escolaOk = !escolaSelecionada || escola.includes(escolaSelecionada);
-            const categoriaOk = !filtroCategoria.value || categoria === categoriaSelecionada;
-            const areaOk = !areaSelecionada || area.includes(areaSelecionada);
+              const escolaOk = !escolaSelecionada || escola.includes(escolaSelecionada);
+              const categoriaOk = !filtroCategoria.value || categoria === categoriaSelecionada;
+              const areaOk = !areaSelecionada || area.includes(areaSelecionada);
 
-            tr.style.display = (escolaOk && categoriaOk && areaOk) ? "" : "none";
-          });
+              tr.style.display = (escolaOk && categoriaOk && areaOk) ? "" : "none";
+            });
+          }
+
+          filtroEscola.addEventListener("change", filtrarTabela);
+          filtroCategoria.addEventListener("change", filtrarTabela);
+          filtroArea.addEventListener("change", filtrarTabela);
+        });
+
+        function gerarZipComProgresso() {
+          const modalElement = document.getElementById('modalProgressoZip');
+          const modalProgresso = new bootstrap.Modal(modalElement);
+          const txtStatus = document.getElementById('txtStatusZip');
+          const detalhes = document.getElementById('detalhesProgresso');
+          const barra = document.getElementById('barraProgressoZip');
+
+          // Reseta e configura o visual inicial do modal
+          barra.style.width = '0%';
+          barra.innerText = '0%';
+          txtStatus.innerText = 'Processando e compactando arquivos em PDF...';
+          detalhes.innerText = 'Isso pode levar alguns instantes. Não feche a página.';
+          barra.classList.add('progress-bar-animated');
+          
+          modalProgresso.show();
+
+          let porcentagemFicticia = 0;
+          const intervaloProgresso = setInterval(() => {
+            if (porcentagemFicticia < 90) {
+              porcentagemFicticia += 5;
+              barra.style.width = porcentagemFicticia + '%';
+              barra.innerText = porcentagemFicticia + '%';
+            }
+          }, 400);
+
+          fetch('../pdf/gerar-zip-stream.php')
+            .then(response => response.json())
+            .then(data => {
+              clearInterval(intervaloProgresso);
+              barra.style.width = '100%';
+              barra.innerText = '100%';
+              txtStatus.innerText = 'Concluído!';
+              detalhes.innerText = 'Iniciando o download do arquivo ZIP...';
+
+              setTimeout(() => {
+                modalProgresso.hide();
+                barra.classList.remove('progress-bar-animated');
+              }, 800);
+
+              if (data.success && data.downloadUrl) {
+                window.location.href = data.downloadUrl;
+              } else {
+                alert(data.message || 'Ocorreu um erro ao gerar o arquivo ZIP.');
+              }
+            })
+            .catch(error => {
+              clearInterval(intervaloProgresso);
+              modalProgresso.hide();
+              barra.classList.remove('progress-bar-animated');
+              alert('Erro de comunicação com o servidor.');
+              console.error(error);
+            });
         }
-
-        filtroEscola.addEventListener("change", filtrarTabela);
-        filtroCategoria.addEventListener("change", filtrarTabela);
-        filtroArea.addEventListener("change", filtrarTabela);
-      });
-    </script>
-    <div class="modal fade" id="modalPdf" tabindex="-1" aria-labelledby="modalPdfLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalPdfLabel">Selecione o Jurado</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-          </div>
-          <div class="modal-body">
-            <div class="d-flex justify-content-center" style="gap: 20px;">
-              <a href="#" class="btn btn-primary">Jurado 1</a>
-              <a href="#" class="btn btn-primary">Jurado 2</a>
+      </script>
+      <div class="modal fade" id="modalPdf" tabindex="-1" aria-labelledby="modalPdfLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalPdfLabel">Selecione o Jurado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
+            <div class="modal-body">
+              <div class="d-flex justify-content-center" style="gap: 20px;">
+                <a href="#" class="btn btn-primary">Jurado 1</a>
+                <a href="#" class="btn btn-primary">Jurado 2</a>
+              </div>
 
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="modal fade" id="modalExcel" tabindex="-1" aria-labelledby="modalExcelLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalExcelLabel">Selecione o Jurado</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-          </div>
-          <div class="modal-body">
-            <div class="d-flex justify-content-center" style="gap: 20px;">
-              <a href="#" class="btn btn-primary">Jurado 1</a>
-              <a href="#" class="btn btn-primary">Jurado 2</a>
+      <!-- MODAL DE PROGRESSO DO ZIP -->
+      <div class="modal fade" id="modalProgressoZip" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Gerando Arquivo ZIP</h5>
             </div>
-
+            <div class="modal-body text-center py-4">
+              <p id="txtStatusZip" class="fw-semibold mb-2">Iniciando processamento...</p>
+              <div class="progress mb-2" style="height: 25px;">
+                <div id="barraProgressoZip" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                  role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+              </div>
+              <small id="detalhesProgresso" class="text-muted">Aguarde, gerando arquivos em um arquivo ZIP...</small>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="modal fade" id="modalJurado" tabindex="-1" aria-labelledby="modalJuradoLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalJuradoLabel">Relatório Por Jurado</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-          </div>
-          <div class="modal-body">
-            <label for="jurado-categoria">Categoria(se for Pesquisa Júnior)</label>
-            <select id="jurado-categoria" class="form-select">
-              <option value="1">Selecione a Categoria</option>
-              <?php foreach ($categorias as $categoria): ?>
-                <?php if($categoria['id_categoria'] === 3): ?>
-                  <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
-                    <?= htmlspecialchars($categoria['nome_categoria']) ?>
-                  </option>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </select>
-            <div id="jurado-area" style="margin-top:10px;">
-              <label for="jurado-area-select">Área</label>
-              <select id="jurado-area-select" class="form-select">
-                <option selected disabled>Selecione a Área</option>
-                <?php foreach ($areas as $area): ?>
-                  <option value="<?= htmlspecialchars($area['id_area']) ?>">
-                    <?= htmlspecialchars($area['nome_area']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+      <div class="modal fade" id="modalExcel" tabindex="-1" aria-labelledby="modalExcelLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalExcelLabel">Selecione o Jurado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div id="jurado-area2" style="display:none; margin-top:10px;">
-              <label for="jurado-area2-select">Área</label>
-              <select id="jurado-area2-select" class="form-select">
-                <option selected disabled>Selecione a Área</option>
-                <option value="6">Ensino Fundamental</option>
-                <option value="7">Ensino Médio</option>
-              </select>
-            </div>
-            <div id="jurado-nome" style="display:none; margin-top:10px;">
-              <label for="jurado-nome-select">Nome do Jurado</label>
-              <select id="jurado-nome-select" class="form-select">
-                <option selected disabled>Selecione o Jurado</option>
-                <?php foreach ($jurados as $j): ?>
-                  <option value="<?= htmlspecialchars($j['id_jurados']) ?>">
-                    <?= htmlspecialchars($j['nome']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+            <div class="modal-body">
+              <div class="d-flex justify-content-center" style="gap: 20px;">
+                <a href="#" class="btn btn-primary">Jurado 1</a>
+                <a href="#" class="btn btn-primary">Jurado 2</a>
+              </div>
+
             </div>
           </div>
-          <script>
-            function carregarJurados() {
-              const categoria = $('#jurado-categoria').val();
-              const area = $('#jurado-area-select').val() || $('#jurado-area2-select').val() || '';
+        </div>
+      </div>
 
-              if (!categoria) return;
+      <div class="modal fade" id="modalJurado" tabindex="-1" aria-labelledby="modalJuradoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalJuradoLabel">Relatório Por Jurado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <label for="jurado-categoria">Categoria(se for Pesquisa Júnior)</label>
+              <select id="jurado-categoria" class="form-select">
+                <option value="1">Selecione a Categoria</option>
+                <?php foreach ($categorias as $categoria): ?>
+                  <?php if ($categoria['id_categoria'] === 3): ?>
+                    <option value="<?= htmlspecialchars($categoria['id_categoria']) ?>">
+                      <?= htmlspecialchars($categoria['nome_categoria']) ?>
+                    </option>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              </select>
+              <div id="jurado-area" style="margin-top:10px;">
+                <label for="jurado-area-select">Área</label>
+                <select id="jurado-area-select" class="form-select">
+                  <option selected disabled>Selecione a Área</option>
+                  <?php foreach ($areas as $area): ?>
+                    <option value="<?= htmlspecialchars($area['id_area']) ?>">
+                      <?= htmlspecialchars($area['nome_area']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div id="jurado-area2" style="display:none; margin-top:10px;">
+                <label for="jurado-area2-select">Área</label>
+                <select id="jurado-area2-select" class="form-select">
+                  <option selected disabled>Selecione a Área</option>
+                  <option value="6">Ensino Fundamental</option>
+                  <option value="7">Ensino Médio</option>
+                </select>
+              </div>
+              <div id="jurado-nome" style="display:none; margin-top:10px;">
+                <label for="jurado-nome-select">Nome do Jurado</label>
+                <select id="jurado-nome-select" class="form-select">
+                  <option selected disabled>Selecione o Jurado</option>
+                  <?php foreach ($jurados as $j): ?>
+                    <option value="<?= htmlspecialchars($j['id_jurados']) ?>">
+                      <?= htmlspecialchars($j['nome']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+            <script>
+              function carregarJurados() {
+                const categoria = $('#jurado-categoria').val();
+                const area = $('#jurado-area-select').val() || $('#jurado-area2-select').val() || '';
+
+                if (!categoria) return;
+
+                $.getJSON('../php/BuscarJurados.php', {
+                    categoria: categoria,
+                    area: area
+                  })
+                  .done(function(data) {
+                    const select = $('#jurado-nome-select');
+                    select.empty().append('<option value="">Selecione o Jurado</option>');
+                    data.forEach(j => {
+                      select.append(`<option value="${j.id_jurados}">${j.nome}</option>`);
+                    });
+                    $('#jurado-nome').slideDown();
+                  })
+              }
+
+              $('#jurado-categoria').on('change', carregarJurados);
+              $('#jurado-area-select, #jurado-area2-select').on('change', carregarJurados);
 
               $.getJSON('../php/BuscarJurados.php', {
-                  categoria: categoria,
-                  area: area
+                  categoria: categoriaSelecionada,
+                  area: areaSelecionada
                 })
                 .done(function(data) {
                   const select = $('#jurado-nome-select');
@@ -320,72 +508,55 @@ $trabalhos = $pdo->query("
                   data.forEach(j => {
                     select.append(`<option value="${j.id_jurados}">${j.nome}</option>`);
                   });
-                  $('#jurado-nome').slideDown();
-                })
-            }
-
-            $('#jurado-categoria').on('change', carregarJurados);
-            $('#jurado-area-select, #jurado-area2-select').on('change', carregarJurados);
-
-            $.getJSON('../php/BuscarJurados.php', {
-                categoria: categoriaSelecionada,
-                area: areaSelecionada
-              })
-              .done(function(data) {
-                const select = $('#jurado-nome-select');
-                select.empty().append('<option value="">Selecione o Jurado</option>');
-                data.forEach(j => {
-                  select.append(`<option value="${j.id_jurados}">${j.nome}</option>`);
                 });
-              });
-          </script>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <button type="button" class="btn btn-success" id="btnGerarRelatorioJurado">Gerar Relatório</button>
+            </script>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+              <button type="button" class="btn btn-success" id="btnGerarRelatorioJurado">Gerar Relatório</button>
+            </div>
           </div>
         </div>
-      </div>
-      <script>
-        $('#jurado-categoria').on('change', function() {
-          const val = $(this).val();
+        <script>
+          $('#jurado-categoria').on('change', function() {
+            const val = $(this).val();
 
-          if (val === '4') {
-            $('#jurado-area2').slideDown();
-            $('#jurado-area').slideUp();
-            $('#jurado-nome').slideUp();
-          } else if (val === '1' || val === '2') {
-            $('#jurado-area').slideDown();
-            $('#jurado-area2').slideUp();
-            $('#jurado-nome').slideUp();
-          } else if (val === '3') {
-            $('#jurado-area, #jurado-area2').slideUp();
+            if (val === '4') {
+              $('#jurado-area2').slideDown();
+              $('#jurado-area').slideUp();
+              $('#jurado-nome').slideUp();
+            } else if (val === '1' || val === '2') {
+              $('#jurado-area').slideDown();
+              $('#jurado-area2').slideUp();
+              $('#jurado-nome').slideUp();
+            } else if (val === '3') {
+              $('#jurado-area, #jurado-area2').slideUp();
+              $('#jurado-nome').slideDown();
+            } else {
+              $('#jurado-area, #jurado-area2, #jurado-nome').slideUp();
+            }
+          });
+
+          $('#jurado-area-select, #jurado-area2-select').on('change', function() {
             $('#jurado-nome').slideDown();
-          } else {
-            $('#jurado-area, #jurado-area2, #jurado-nome').slideUp();
-          }
-        });
+          });
 
-        $('#jurado-area-select, #jurado-area2-select').on('change', function() {
-          $('#jurado-nome').slideDown();
-        });
+          $('#btnGerarRelatorioJurado').on('click', function() {
+            const categoria = $('#jurado-categoria').val();
+            const area = $('#jurado-area-select').val() || $('#jurado-area2-select').val() || '';
+            const id_jurado = $('#jurado-nome-select').val();
 
-        $('#btnGerarRelatorioJurado').on('click', function() {
-          const categoria = $('#jurado-categoria').val();
-          const area = $('#jurado-area-select').val() || $('#jurado-area2-select').val() || '';
-          const id_jurado = $('#jurado-nome-select').val();
+            if (!id_jurado) {
+              alert('Selecione todos os campos antes de gerar o relatório.');
+              return;
+            }
 
-          if (!id_jurado) {
-            alert('Selecione todos os campos antes de gerar o relatório.');
-            return;
-          }
+            let url = `../html/relat-por-jurado.php?id_jurado=${id_jurado}&id_categoria=${categoria}`;
+            if (area) url += `&id_area=${area}`;
 
-          let url = `../html/relat-por-jurado.php?id_jurado=${id_jurado}&id_categoria=${categoria}`;
-          if (area) url += `&id_area=${area}`;
-
-          window.open(url, '_blank');
-        });
-      </script>
-    </div>
+            window.open(url, '_blank');
+          });
+        </script>
+      </div>
     </div>
     <!--  MODAL DE AMBOS OS JURADOS - COMEÇO  -->
     <div class="modal fade" id="modalAmbosJurados" tabindex="-1" aria-labelledby="modalAmbosJuradosLabel"
@@ -468,7 +639,7 @@ $trabalhos = $pdo->query("
               <option value="">Selecione a Escola</option>
               <?php foreach ($escolas as $escola): ?>
                 <option value="<?= htmlspecialchars($escola['id_escolas']) ?>">
-                  <?= htmlspecialchars($escola['categoria_da_escola'] ?? '') .' '. htmlspecialchars($escola['nome']) ?>
+                  <?= htmlspecialchars($escola['categoria_da_escola'] ?? '') . ' ' . htmlspecialchars($escola['nome']) ?>
                 </option>
               <?php endforeach; ?>
             </select>
