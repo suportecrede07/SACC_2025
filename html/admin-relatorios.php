@@ -147,6 +147,10 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
               class="label-text">Jurados</span></a></li>
         <li class="active"><a href="admin-relatorios.php"><i><img src="../assets/img/relatorios.svg" class="relatorio"></i> <span
               class="label-text">Relatórios</span></a></li>
+        <li><a href="admin-graficos.php"><i><img src="../assets/img/grafico.svg" class="graficos"></i> <span
+              class="label-text">Graficos</span></a></li>
+        <li><a href="admin-config.php"><i><img src="../assets/img/config.svg" class="grafico"></i> <span
+              class="label-text">Configurações</span></a></li>
       </ul>
     </div>
     <ul class="nav flex-column bottom-nav">
@@ -730,7 +734,9 @@ if (isset($_POST["botaoFichaEscolas"]) && !empty($trabalhos)) {
         </div>
       </div>
     </div>
-
+  <footer class="footer-copy text-center py-4 text-muted" style="font-size: 0.82rem;">
+      Sistema SAFC &copy; <?= date('Y') ?> &bull; Iniciativa Crede 7
+    </footer>
   </main>
   <script src="../bootstrap/JS/jquery.min.js"></script>
   <script>

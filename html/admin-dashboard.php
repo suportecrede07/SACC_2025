@@ -146,6 +146,10 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
               class="label-text">Jurados</span></a></li>
         <li><a href="admin-relatorios.php"><i><img src="../assets/img/relatorios.svg" class="relatorio"></i> <span
               class="label-text">Relatórios</span></a></li>
+        <li><a href="admin-graficos.php"><i><img src="../assets/img/grafico.svg" class="grafico"></i> <span
+              class="label-text">Graficos</span></a></li>
+        <li><a href="admin-config.php"><i><img src="../assets/img/config.svg" class="grafico"></i> <span
+               class="label-text">Configurações</span></a></li>
       </ul>
     </div>
     <ul class="nav flex-column bottom-nav">
@@ -979,6 +983,9 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
         </div>
       </div>
     </div>
+      <footer class="footer-copy text-center py-4 text-muted" style="font-size: 0.82rem;">
+      Sistema SAFC &copy; <?= date('Y') ?> &bull; Iniciativa Crede 7
+    </footer>
   </main>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
