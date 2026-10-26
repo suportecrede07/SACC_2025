@@ -105,6 +105,10 @@ $trabalhosCadastrados = $pdo->query("SELECT id_escolas, id_areas, titulo FROM Tr
 $stmtModalidade = $pdo->prepare("SELECT * FROM Categoria_escolas WHERE id = ?");
 $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
 
+// Busca os campos dinâmicos ativos para o formulário de escolas
+$stmtCamposEscola = $pdo->query("SELECT * FROM Campos_formulario WHERE ativo = 1 AND formulario = 'escola' ORDER BY id ASC");
+$campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -221,6 +225,7 @@ $categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
         </button>
         <br>
         <br>
+        
         <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
           aria-hidden="true">
           <div class="modal-dialog">
