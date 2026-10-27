@@ -49,105 +49,138 @@ if (isset($categoriasAreas[1])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Jurado</title>
+    <title>Editar Jurado - SAFC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../boostrap/CSS/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/styles/admin-dashboard.css">
-    <script src="../boostrap/JS/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../boostrap/CSS/bootstrap-icons.css">
     <script src="../boostrap/JS/jquery.min.js"></script>
-    <link href="../boostrap/CSS/bootstrap.min.css" rel="stylesheet">
-    <link href="../boostrap/CSS/bootstrap-icons.css" rel="stylesheet">
+    <script src="../boostrap/JS/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f4f6f9;
+            color: #212529;
+        }
+        .card-custom {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            padding: 28px;
+            max-width: 680px;
+            margin: 40px auto;
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+    </style>
 </head>
 
 <body>
-    <style>
-        .modal-body {
-            margin: 40px;
-        }
-    </style>
+    <div class="container">
+        <div class="card-custom">
+            <h3 class="fw-bold text-dark mb-4 border-bottom pb-3">Editar Jurado</h3>
 
-    <div class="modal-body">
-        <h5 class="modal-title" id="modalJuradoLabel">Editar Jurado</h5>
-        <form action="../php/Atualizajurados.php" method="POST" id="idCadJurado">
-            <input type="hidden" name="id" value="<?= $jurado['id_jurados'] ?>">
-            <label for="nome">Nome</label>
-            <input type="text" class="form-control" name="nome"
-                placeholder="Digite seu nome"
-                value="<?= htmlspecialchars($jurado['nome'] ?? '') ?>" required>
+            <form action="../php/Atualizajurados.php" method="POST" id="idCadJurado">
+                <input type="hidden" name="id" value="<?= $jurado['id_jurados'] ?>">
 
-            <label for="telefone">Telefone</label>
-            <input type="text" class="form-control" name="telefone"
-                placeholder="Digite seu telefone"
-                value="<?= htmlspecialchars($jurado['telefone'] ?? '') ?>" required>
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome Completo <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nome" name="nome"
+                        placeholder="Digite seu nome"
+                        value="<?= htmlspecialchars($jurado['nome'] ?? '') ?>" required>
+                </div>
 
-            <label for="cpf">CPF</label>
-            <input type="text" class="form-control" name="cpf"
-                placeholder="Digite seu CPF"
-                value="<?= htmlspecialchars($jurado['cpf'] ?? '') ?>" required>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="telefone" class="form-label">Telefone <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="telefone" name="telefone"
+                            placeholder="Digite seu telefone"
+                            value="<?= htmlspecialchars($jurado['telefone'] ?? '') ?>" required>
+                    </div>
 
-            <label for="email">E-mail SIC-CED</label>
-            <input type="text" class="form-control" name="email"
-                placeholder="Digite seu e-mail"
-                value="<?= htmlspecialchars($jurado['email'] ?? '') ?>" required>
+                    <div class="col-md-6 mb-3">
+                        <label for="cpf" class="form-label">CPF <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cpf" name="cpf"
+                            placeholder="Digite seu CPF"
+                            value="<?= htmlspecialchars($jurado['cpf'] ?? '') ?>" required>
+                    </div>
+                </div>
 
-            <!-- Categoria 1 -->
-            <label for="categoria1">Categoria 1</label>
-            <select id="categoria1" class="form-control" name="categoria1" required>
-                <option disabled <?= !isset($categoria1) ? 'selected' : '' ?>>Selecione...</option>
-                <option value="1" <?= $categoria1 == 1 ? 'selected' : '' ?>>I - Ensino Médio</option>
-                <option value="2" <?= $categoria1 == 2 ? 'selected' : '' ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
-                <option value="3" <?= $categoria1 == 3 ? 'selected' : '' ?>>III - Pesquisa Júnior</option>
-                <option value="4" <?= $categoria1 == 4 ? 'selected' : '' ?>>IV - PcD</option>
-            </select>
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail SIC-CED <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="email" name="email"
+                        placeholder="Digite seu e-mail"
+                        value="<?= htmlspecialchars($jurado['email'] ?? '') ?>" required>
+                </div>
 
-            <div id="area1-container" style="display:none;">
-                <label for="area1">Área 1</label>
-                <select class="form-control" name="area1">
-                    <option disabled <?= !isset($area1) ? 'selected' : '' ?>>Selecione...</option>
-                    <option value="1" <?= $area1 == 1 ? 'selected' : '' ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
-                    <option value="2" <?= $area1 == 2 ? 'selected' : '' ?>>Matemática e suas Tecnologias - MT</option>
-                    <option value="3" <?= $area1 == 3 ? 'selected' : '' ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
-                    <option value="4" <?= $area1 == 4 ? 'selected' : '' ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
-                    <option value="5" <?= $area1 == 5 ? 'selected' : '' ?>>Robótica, Automação e Aplicação das TIC</option>
-                    <option value="6" <?= $area1 == 6 ? 'selected' : '' ?>>Ensino Fundamental</option>
-                    <option value="7" <?= $area1 == 7 ? 'selected' : '' ?>>Ensino Médio</option>
-                </select>
-            </div>
+                <div class="border-top pt-3 mt-4">
+                    <h6 class="fw-bold text-dark mb-3">Atribuição de Categorias e Áreas</h6>
 
-            <!-- Categoria 2 -->
-            <label for="categoria2">Categoria 2</label>
-            <select id="categoria2" class="form-control" name="categoria2">
-                <option value="" <?= !$categoria2 ? 'selected' : '' ?>>Nenhuma</option>
-                <option value="1" <?= $categoria2 == 1 ? 'selected' : '' ?>>I - Ensino Médio</option>
-                <option value="2" <?= $categoria2 == 2 ? 'selected' : '' ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
-                <option value="3" <?= $categoria2 == 3 ? 'selected' : '' ?>>III - Pesquisa Júnior</option>
-                <option value="4" <?= $categoria2 == 4 ? 'selected' : '' ?>>IV - PcD</option>
-            </select>
+                    <!-- Categoria 1 -->
+                    <div class="mb-3">
+                        <label for="categoria1" class="form-label">Categoria 1 <span class="text-danger">*</span></label>
+                        <select id="categoria1" class="form-control" name="categoria1" required>
+                            <option disabled <?= !isset($categoria1) ? 'selected' : '' ?>>Selecione...</option>
+                            <option value="1" <?= $categoria1 == 1 ? 'selected' : '' ?>>I - Ensino Médio</option>
+                            <option value="2" <?= $categoria1 == 2 ? 'selected' : '' ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
+                            <option value="3" <?= $categoria1 == 3 ? 'selected' : '' ?>>III - Pesquisa Júnior</option>
+                            <option value="4" <?= $categoria1 == 4 ? 'selected' : '' ?>>IV - PcD</option>
+                        </select>
+                    </div>
 
-            <div id="area2-container" style="display:none;">
-                <label for="area2">Área 2</label>
-                <select class="form-control" name="area2">
-                    <option disabled <?= !isset($area2) ? 'selected' : '' ?>>Selecione...</option>
-                    <option value="1" <?= $area2 == 1 ? 'selected' : '' ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
-                    <option value="2" <?= $area2 == 2 ? 'selected' : '' ?>>Matemática e suas Tecnologias - MT</option>
-                    <option value="3" <?= $area2 == 3 ? 'selected' : '' ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
-                    <option value="4" <?= $area2 == 4 ? 'selected' : '' ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
-                    <option value="5" <?= $area2 == 5 ? 'selected' : '' ?>>Robótica, Automação e Aplicação das TIC</option>
-                    <option value="6" <?= $area2 == 6 ? 'selected' : '' ?>>Ensino Fundamental</option>
-                    <option value="7" <?= $area2 == 7 ? 'selected' : '' ?>>Ensino Médio</option>
-                </select>
-            </div>
+                    <div id="area1-container" class="mb-3" style="display:none;">
+                        <label for="area1" class="form-label">Área 1</label>
+                        <select class="form-control" id="area1" name="area1">
+                            <option disabled <?= !isset($area1) ? 'selected' : '' ?>>Selecione...</option>
+                            <option value="1" <?= $area1 == 1 ? 'selected' : '' ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
+                            <option value="2" <?= $area1 == 2 ? 'selected' : '' ?>>Matemática e suas Tecnologias - MT</option>
+                            <option value="3" <?= $area1 == 3 ? 'selected' : '' ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
+                            <option value="4" <?= $area1 == 4 ? 'selected' : '' ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
+                            <option value="5" <?= $area1 == 5 ? 'selected' : '' ?>>Robótica, Automação e Aplicação das TIC</option>
+                            <option value="6" <?= $area1 == 6 ? 'selected' : '' ?>>Ensino Fundamental</option>
+                            <option value="7" <?= $area1 == 7 ? 'selected' : '' ?>>Ensino Médio</option>
+                        </select>
+                    </div>
 
+                    <!-- Categoria 2 -->
+                    <div class="mb-3">
+                        <label for="categoria2" class="form-label">Categoria 2</label>
+                        <select id="categoria2" class="form-control" name="categoria2">
+                            <option value="" <?= !$categoria2 ? 'selected' : '' ?>>Nenhuma</option>
+                            <option value="1" <?= $categoria2 == 1 ? 'selected' : '' ?>>I - Ensino Médio</option>
+                            <option value="2" <?= $categoria2 == 2 ? 'selected' : '' ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
+                            <option value="3" <?= $categoria2 == 3 ? 'selected' : '' ?>>III - Pesquisa Júnior</option>
+                            <option value="4" <?= $categoria2 == 4 ? 'selected' : '' ?>>IV - PcD</option>
+                        </select>
+                    </div>
 
-            <input type="submit" value="Atualizar" class="btn btn-success mt-3" style="margin-top:10px;">
-            <button type="button" id="btnResetarSenha" class="btn btn-danger mt-3" style="margin-top:10px;">Resetar senha</button>
-            <a href="../html/admin-jurados.php" class="btn btn-secondary mt-3">Cancelar</a>
-        </form>
-    </div>
-    <div class="modal-footer">
+                    <div id="area2-container" class="mb-3" style="display:none;">
+                        <label for="area2" class="form-label">Área 2</label>
+                        <select class="form-control" id="area2" name="area2">
+                            <option disabled <?= !isset($area2) ? 'selected' : '' ?>>Selecione...</option>
+                            <option value="1" <?= $area2 == 1 ? 'selected' : '' ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
+                            <option value="2" <?= $area2 == 2 ? 'selected' : '' ?>>Matemática e suas Tecnologias - MT</option>
+                            <option value="3" <?= $area2 == 3 ? 'selected' : '' ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
+                            <option value="4" <?= $area2 == 4 ? 'selected' : '' ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
+                            <option value="5" <?= $area2 == 5 ? 'selected' : '' ?>>Robótica, Automação e Aplicação das TIC</option>
+                            <option value="6" <?= $area2 == 6 ? 'selected' : '' ?>>Ensino Fundamental</option>
+                            <option value="7" <?= $area2 == 7 ? 'selected' : '' ?>>Ensino Médio</option>
+                        </select>
+                    </div>
+                </div>
 
-    </div>
-    </div>
-    </div>
+                <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-success px-4 fw-semibold">Salvar Alterações</button>
+                    <button type="button" id="btnResetarSenha" class="btn btn-outline-danger fw-semibold">Resetar Senha</button>
+                    <a href="../html/admin-jurados.php" class="btn btn-secondary px-4 fw-semibold ms-auto">Cancelar</a>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>

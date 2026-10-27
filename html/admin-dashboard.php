@@ -102,13 +102,17 @@ $total_jurados = $stmt->fetch(PDO::FETCH_ASSOC)['total_jurados'];
 
 $trabalhosCadastrados = $pdo->query("SELECT id_escolas, id_areas, titulo FROM Trabalhos")->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtModalidade = $pdo->prepare("SELECT * FROM Categoria_escolas WHERE id = ?");
-$categoria_escola = $stmtModalidade->fetch(PDO::FETCH_ASSOC);
+// Busca todas as modalidades da tabela categoria_escolas
+$stmtCatEscolas = $pdo->query("SELECT id, categoria_da_escola FROM categoria_escolas ORDER BY id ASC");
+$modalidades_lista = $stmtCatEscolas->fetchAll(PDO::FETCH_ASSOC);
 
 // Busca os campos dinâmicos ativos para o formulário de escolas
 $stmtCamposEscola = $pdo->query("SELECT * FROM Campos_formulario WHERE ativo = 1 AND formulario = 'escola' ORDER BY id ASC");
 $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
 
+// Busca os campos dinâmicos ativos para o formulário de trabalhos
+$stmtCamposTrabalho = $pdo->query("SELECT * FROM Campos_formulario WHERE ativo = 1 AND formulario = 'trabalho' ORDER BY id ASC");
+$campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -153,7 +157,7 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
         <li><a href="admin-graficos.php"><i><img src="../assets/img/grafico.svg" class="grafico"></i> <span
               class="label-text">Graficos</span></a></li>
         <li><a href="admin-config.php"><i><img src="../assets/img/config.svg" class="grafico"></i> <span
-               class="label-text">Configurações</span></a></li>
+              class="label-text">Configurações</span></a></li>
       </ul>
     </div>
     <ul class="nav flex-column bottom-nav">
@@ -225,7 +229,7 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
         </button>
         <br>
         <br>
-        
+
         <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
           aria-hidden="true">
           <div class="modal-dialog">
@@ -236,31 +240,28 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
               </div>
               <div class="modal-body">
                 <form method="POST" action="../php/Cadescola.php" id="idCadEscola">
+                  
+                  <!-- SEÇÃO 1: DADOS FIXOS PADRÃO DA INSTITUIÇÃO -->
+                  <h6 class="fw-bold text-dark mb-3">Dados da Instituição</h6>
 
-                  <label for="instituicao-categoria" class="form-label mt-2">Modalidade da instituição</label>
+                  <label for="instituicao-categoria" class="form-label">Modalidade da Instituição <span class="text-danger">*</span></label>
                   <select id="instituicao-categoria" class="form-control" name="categoriaEscola" required>
-                    <option selected disabled>Selecione...</option>
-                    <option value="1">EEEP</option>
-                    <option value="2">EEMTI</option>
-                    <option value="3">EEM</option>
-                    <option value="4">EEMPC</option>
-                    <option value="5">CEJA</option>
-                    <option value="6">INDÍGENA</option>
-                    <option value="7">Municipal</option>
-                    <option value="7">Colégio</option>
+                    <option selected disabled value="">Selecione...</option>
+                    <?php foreach ($modalidades_lista as $mod): ?>
+                      <option value="<?= htmlspecialchars($mod['id']) ?>">
+                        <?= htmlspecialchars($mod['categoria_da_escola']) ?>
+                      </option>
+                    <?php endforeach; ?>
                   </select>
 
-                  <div id="campo-digitacaoEscola" style="display:none;">
-                    <label for="instituicao-nome" class="form-label">Nome da Instituição</label>
-                    <input type="text" id="instituicao-nome" class="form-control" name="nome"
-                      placeholder="Digite o nome da instituição" required>
+                  <div id="campo-digitacaoEscola" style="display: none;">
+                    <label for="instituicao-nome" class="form-label mt-2">Nome da Instituição <span class="text-danger">*</span></label>
+                    <input type="text" id="instituicao-nome" class="form-control" name="nome" placeholder="Digite o nome da escola" required>
                   </div>
 
-                  <input type="hidden" name="categoria_escolas" id="categoria_escolas">
-
-                  <label for="instituicao-localidade" class="form-label mt-2">Município</label>
-                  <select id="instituicao-localidade" class="form-control" name="municipio">
-                    <option selected disabled>Selecione...</option>
+                  <label for="instituicao-municipio" class="form-label mt-2">Município <span class="text-danger">*</span></label>
+                  <select id="instituicao-municipio" class="form-control" name="municipio" required>
+                    <option selected disabled value="">Selecione...</option>
                     <option value="1">Caridade</option>
                     <option value="2">Canindé</option>
                     <option value="3">Paramoti</option>
@@ -269,28 +270,51 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
                     <option value="6">Itatira</option>
                   </select>
 
-                  <label for="instituicao-tipo" class="form-label mt-2">Tipo</label>
-                  <select id="instituicao-tipo" class="form-control" name="focalizada">
-                    <option selected disabled>Selecione...</option>
-                    <option value="1">Focalizado</option>
-                  </select>
+                  <!-- SEÇÃO 2: CAMPOS DINÂMICOS ADICIONAIS -->
+                  <?php if (!empty($campos_escola)): ?>
+                    <div class="mt-4 pt-3 border-top">
+                      <h6 class="fw-bold text-success mb-2">
+                        <i class="bi bi-plus-circle me-1"></i>Informações Adicionais (Campos Extras)
+                      </h6>
+                      <p class="text-muted small mb-3">Campos complementares configurados para o cadastro de escolas.</p>
+                      <?php foreach ($campos_escola as $campo): ?>
+                        <label for="campo_dinamico_<?= $campo['id'] ?>" class="form-label mt-2">
+                          <?= htmlspecialchars($campo['nome_campo']) ?>
+                          <?= $campo['obrigatorio'] ? '<span class="text-danger">*</span>' : '' ?>
+                        </label>
 
-                  <div id="campo-ide" style="display:none;">
-                    <label for="instituicao-ide" class="form-label mt-2">IDE Médio da Escola</label>
-                    <select id="instituicao-ide" class="form-control" name="ide">
-                      <option selected disabled>Selecione...</option>
-                      <option value="1">Sim</option>
-                    </select>
-                  </div>
+                        <?php if ($campo['tipo_campo'] === 'modalidade'): ?>
+                          <select id="campo_dinamico_<?= $campo['id'] ?>" class="form-control" name="campos_dinamicos[<?= $campo['id'] ?>]" <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                            <option selected disabled value="">Selecione...</option>
+                            <?php foreach ($modalidades_lista as $mod): ?>
+                              <option value="<?= htmlspecialchars($mod['id']) ?>">
+                                <?= htmlspecialchars($mod['categoria_da_escola']) ?>
+                              </option>
+                            <?php endforeach; ?>
+                          </select>
 
-                  <div id="campo-IDEB">
-                    <label for="instituicao-ideb" class="form-label mt-2">IDEB</label>
-                    <input type="number" id="instituicao-ideb" class="form-control" step="0.1" name="IDEB" placeholder="Insira...">
-                  </div>
-                  <div id="campo-total_trabalhos">
-                    <label for="instituicao-total_trabalhos" class="form-label mt-2">Quantidade de trabalhos na etapa escolar</label>
-                    <input type="number" id="instituicao-total_trabalhos" class="form-control" step="1" name="total_trabalhos" placeholder="Insira...">
-                  </div>
+                        <?php elseif ($campo['tipo_campo'] === 'sim_nao'): ?>
+                          <select id="campo_dinamico_<?= $campo['id'] ?>" class="form-control" name="campos_dinamicos[<?= $campo['id'] ?>]" <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                            <option selected disabled value="">Selecione...</option>
+                            <option value="1">Sim</option>
+                            <option value="0">Não</option>
+                          </select>
+
+                        <?php else:
+                          $tipoInput = 'text';
+                          if ($campo['tipo_campo'] === 'numero') $tipoInput = 'number';
+                          if ($campo['tipo_campo'] === 'data') $tipoInput = 'date';
+                        ?>
+                          <input type="<?= $tipoInput ?>"
+                            id="campo_dinamico_<?= $campo['id'] ?>"
+                            class="form-control"
+                            name="campos_dinamicos[<?= $campo['id'] ?>]"
+                            placeholder="Insira <?= htmlspecialchars($campo['nome_campo']) ?>"
+                            <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                        <?php endif; ?>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php endif; ?>
 
                   <input type="submit" value="Enviar" class="btn btn-success mt-3">
                 </form>
@@ -600,9 +624,56 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
                     <option value="7">Ensino Médio</option>
                   </select>
                 </div>
-                <label for="trabalho-ordem" class="form-label">Digite a ordem do trabalho</label>
+                <label for="trabalho-ordem" class="form-label mt-2">Digite a ordem do trabalho</label>
                 <input type="text" id="trabalho-ordem" class="form-control" name="ordem" placeholder="Insira...." required>
-                <input type="submit" value="Enviar" class="btn btn-success" style="margin-top:10px;">
+
+                <!-- SEÇÃO CAMPOS DINÂMICOS ADICIONAIS -->
+                <?php if (!empty($campos_trabalho)): ?>
+                  <div class="mt-4 pt-3 border-top">
+                    <h6 class="fw-bold text-success mb-2">
+                      <i class="bi bi-plus-circle me-1"></i>Informações Adicionais (Campos Extras)
+                    </h6>
+                    <p class="text-muted small mb-3">Campos complementares configurados para o cadastro de trabalhos.</p>
+                    <?php foreach ($campos_trabalho as $campo): ?>
+                      <label for="campo_dinamico_trabalho_<?= $campo['id'] ?>" class="form-label mt-2">
+                        <?= htmlspecialchars($campo['nome_campo']) ?>
+                        <?= $campo['obrigatorio'] ? '<span class="text-danger">*</span>' : '' ?>
+                      </label>
+
+                      <?php if ($campo['tipo_campo'] === 'modalidade'): ?>
+                        <select id="campo_dinamico_trabalho_<?= $campo['id'] ?>" class="form-control" name="campos_dinamicos[<?= $campo['id'] ?>]" <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                          <option selected disabled value="">Selecione...</option>
+                          <?php foreach ($modalidades_lista as $mod): ?>
+                            <option value="<?= htmlspecialchars($mod['id']) ?>">
+                              <?= htmlspecialchars($mod['categoria_da_escola']) ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+
+                      <?php elseif ($campo['tipo_campo'] === 'sim_nao'): ?>
+                        <select id="campo_dinamico_trabalho_<?= $campo['id'] ?>" class="form-control" name="campos_dinamicos[<?= $campo['id'] ?>]" <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                          <option selected disabled value="">Selecione...</option>
+                          <option value="1">Sim</option>
+                          <option value="0">Não</option>
+                        </select>
+
+                      <?php else:
+                        $tipoInput = 'text';
+                        if ($campo['tipo_campo'] === 'numero') $tipoInput = 'number';
+                        if ($campo['tipo_campo'] === 'data') $tipoInput = 'date';
+                      ?>
+                        <input type="<?= $tipoInput ?>"
+                          id="campo_dinamico_trabalho_<?= $campo['id'] ?>"
+                          class="form-control"
+                          name="campos_dinamicos[<?= $campo['id'] ?>]"
+                          placeholder="Insira <?= htmlspecialchars($campo['nome_campo']) ?>"
+                          <?= $campo['obrigatorio'] ? 'required' : '' ?>>
+                      <?php endif; ?>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+
+                <input type="submit" value="Enviar" class="btn btn-success mt-3">
               </form>
             </div>
             <div class="modal-footer">
@@ -988,7 +1059,7 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
         </div>
       </div>
     </div>
-      <footer class="footer-copy text-center py-4 text-muted" style="font-size: 0.82rem;">
+    <footer class="footer-copy text-center py-4 text-muted" style="font-size: 0.82rem;">
       Sistema SAFC &copy; <?= date('Y') ?> &bull; Iniciativa Crede 7
     </footer>
   </main>
@@ -1027,7 +1098,12 @@ $campos_escola = $stmtCamposEscola->fetchAll(PDO::FETCH_ASSOC);
       ($(this).val() === '1') ? $('#campo-ide').slideDown(): $('#campo-ide').slideUp();
     });
     $('#instituicao-categoria').change(function() {
-      ($(this).val() >= '1') ? $('#campo-digitacaoEscola').slideDown(): $('campo-digitacaoEscola').slideUp();
+      if ($(this).val()) {
+        $('#campo-digitacaoEscola').slideDown();
+      } else {
+        $('#campo-digitacaoEscola').slideUp();
+        $('#instituicao-nome').val('');
+      }
     });
     $('#trabalho-categoria').change(function() {
       var categoria = $(this).val();

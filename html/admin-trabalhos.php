@@ -29,6 +29,23 @@ $sql .= " ORDER BY t.ordem ASC, t.id_trabalhos ASC";
 $result = $pdo->query($sql);
 $trabalhos = $result->fetchAll(PDO::FETCH_ASSOC);
 $total_trabalhos = count($trabalhos);
+
+// Busca os campos dinâmicos ativos para o formulário de trabalhos
+$stmtCampos = $pdo->query("SELECT * FROM Campos_formulario WHERE ativo = 1 AND formulario = 'trabalho' ORDER BY id ASC");
+$campos_trabalho = $stmtCampos->fetchAll(PDO::FETCH_ASSOC);
+
+// Busca os valores preenchidos dos campos dinâmicos para cada trabalho
+$valores_por_trabalho = [];
+if (!empty($trabalhos) && !empty($campos_trabalho)) {
+    $ids_trabalhos = array_column($trabalhos, 'id_trabalhos');
+    $placeholders = implode(',', array_fill(0, count($ids_trabalhos), '?'));
+    $stmtValores = $pdo->prepare("SELECT id_campo, id_registro, valor FROM Valores_campos WHERE id_registro IN ($placeholders)");
+    $stmtValores->execute($ids_trabalhos);
+    $linhas_valores = $stmtValores->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($linhas_valores as $lv) {
+        $valores_por_trabalho[$lv['id_registro']][$lv['id_campo']] = $lv['valor'];
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -191,6 +208,11 @@ $total_trabalhos = count($trabalhos);
               <th>CATEGORIA</th>
               <th>ÁREA</th>
               <th>Ordem</th>
+              <?php if (!empty($campos_trabalho)): ?>
+                <?php foreach ($campos_trabalho as $campo): ?>
+                  <th><?= htmlspecialchars(mb_strtoupper($campo['nome_campo'], 'UTF-8')) ?></th>
+                <?php endforeach; ?>
+              <?php endif; ?>
               <?php if($_SESSION['Nivel_permissao'] === 0): ?>
                 <th class="text-center pe-4">AÇÕES</th>
               <?php endif; ?>
@@ -205,6 +227,15 @@ $total_trabalhos = count($trabalhos);
                   <td><span class="category-pill"><?=htmlspecialchars($row['nome_categoria']) ?></span></td>
                   <td><?= htmlspecialchars($row['nome_area'] ?? '-') ?></td>
                   <td style="text-align: center;" ><?= htmlspecialchars($row['ordem'] ?? '-') ?></td>
+                  <?php if (!empty($campos_trabalho)): ?>
+                    <?php foreach ($campos_trabalho as $campo): 
+                      $val = $valores_por_trabalho[$row['id_trabalhos']][$campo['id']] ?? null;
+                    ?>
+                      <td class="fw-semibold text-dark" style="text-align: center;">
+                        <?= ($val !== null && $val !== '') ? htmlspecialchars($val) : '—' ?>
+                      </td>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
                   <?php if($_SESSION['Nivel_permissao'] === 0): ?>
                     <td class="text-center pe-4 text-nowrap">
                       <div class="d-inline-flex gap-2">
@@ -226,7 +257,7 @@ $total_trabalhos = count($trabalhos);
               <?php endforeach; ?>
             <?php else: ?>
               <tr>
-                <td colspan="5" class="text-center py-4 text-muted">Nenhum trabalho cadastrado.</td>
+                <td colspan="<?= 6 + count($campos_trabalho) ?>" class="text-center py-4 text-muted">Nenhum trabalho cadastrado.</td>
               </tr>
             <?php endif; ?>
           </tbody>

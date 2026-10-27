@@ -85,41 +85,22 @@ $stmtCategorias = $pdo->prepare($sqlCat);
 $stmtCategorias->execute($params);
 $dados_categorias = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
-// 2. Escolas e IDEB
+// 2. Escolas
 $sqlEscolas = "SELECT DISTINCT 
                   e.id_escolas,
                   e.nome, 
-                  e.IDEB, 
                   e.total_trabalhos,
                   ce.categoria_da_escola AS tipo_escola
                FROM Escolas e 
                LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
                $clausulaWhere 
-               ORDER BY e.IDEB DESC, e.nome ASC";
+               ORDER BY e.nome ASC";
 
 $stmtEscolas = $pdo->prepare($sqlEscolas);
 $stmtEscolas->execute($params);
 $dados_Escola = $stmtEscolas->fetchAll(PDO::FETCH_ASSOC);
 
-// Cálculos para os KPI Cards
 $total_escolas_count = count($dados_Escola);
-$soma_ideb = 0;
-$qtd_ideb_validos = 0;
-$acima_meta_count = 0;
-
-foreach ($dados_Escola as $esc) {
-    $val = (float)$esc['IDEB'];
-    if ($val > 0) {
-        $soma_ideb += $val;
-        $qtd_ideb_validos++;
-        if ($val >= 6.0) {
-            $acima_meta_count++;
-        }
-    }
-}
-
-$media_ideb = $qtd_ideb_validos > 0 ? round($soma_ideb / $qtd_ideb_validos, 1) : 0;
-$perc_meta = $qtd_ideb_validos > 0 ? round(($acima_meta_count / $qtd_ideb_validos) * 100, 1) : 0;
 
 // Filtros para Trabalhos e Avaliações
 $whereTrabalho = [];
@@ -183,7 +164,19 @@ foreach ($dados_categorias as $cat) {
 }
 $maior_categoria_perc = $total_escolas_count > 0 ? round(($maior_categoria_qtd / $total_escolas_count) * 100, 1) : 0;
 
-// Médias dos 9 critérios para o Gráfico Radar
+// Critérios Avaliativos Dinâmicos da tabela Criterios_avaliacao
+$stmtCritOficiais = $pdo->query("SELECT id, nome, peso, ordem FROM Criterios_avaliacao WHERE ativo = 1 ORDER BY ordem ASC, id ASC");
+$criterios_banco = $stmtCritOficiais->fetchAll(PDO::FETCH_ASSOC);
+
+// Mapeia os critérios (id => nome e id => peso)
+$todos_criterios_oficiais = [];
+$pesos_criterios = [];
+foreach ($criterios_banco as $cb) {
+    $todos_criterios_oficiais[$cb['id']] = $cb['nome'];
+    $pesos_criterios[$cb['id']] = (float)$cb['peso'];
+}
+
+// Médias dos critérios para o Gráfico Radar
 $sqlCriterios = "
     SELECT av.criterio, ROUND(AVG(av.nota), 1) as media_criterio 
     FROM avaliacoes av
@@ -197,18 +190,6 @@ $sqlCriterios = "
 $stmtCriterios = $pdo->prepare($sqlCriterios);
 $stmtCriterios->execute($paramsTrabalho);
 $dados_radar_banco = $stmtCriterios->fetchAll(PDO::FETCH_KEY_PAIR);
-
-$todos_criterios_oficiais = [
-    1 => 'Criatividade/Inovação',
-    2 => 'Relevância da Pesquisa',
-    3 => 'Conhecimento Científico',
-    4 => 'Impacto Social',
-    5 => 'Metodologia',
-    6 => 'Clareza de Linguagem',
-    7 => 'Banner',
-    8 => 'Caderno de Campo',
-    9 => 'Participativo/Solidário'
-];
 
 $radar_labels = [];
 $radar_valores = [];
@@ -229,15 +210,6 @@ foreach ($todos_criterios_oficiais as $numCrit => $nomeCrit) {
 $json_radar_labels = json_encode($radar_labels, JSON_UNESCAPED_UNICODE);
 $json_radar_valores = json_encode($radar_valores);
 
-// Arrays para o gráfico polar
-$todas_escolas_nomes = [];
-$todas_escolas_ideb = [];
-foreach ($dados_Escola as $escP) {
-    $todas_escolas_nomes[] = $escP['nome'];
-    $todas_escolas_ideb[] = (float)$escP['IDEB'];
-}
-$json_escolas_nomes = json_encode($todas_escolas_nomes, JSON_UNESCAPED_UNICODE);
-$json_escolas_ideb  = json_encode($todas_escolas_ideb);
 
 $categorias = [];
 $contagem_categorias = [];
@@ -267,6 +239,7 @@ $clausulaWhereRanking = $whereRanking ? "WHERE " . implode(" AND ", $whereRankin
 $sqlTrabalhosRanking = "
     SELECT 
         t.id_trabalhos,
+        t.id_escolas,
         t.titulo,
         e.nome AS escola_nome,
         e.IDEB,
@@ -303,7 +276,35 @@ foreach ($avaliacoesRank as $av) {
     $notasPorTrabalhoRank[$av['id_trabalho']][$av['id_jurado']][$av['criterio']] = (float)$av['nota'];
 }
 
-$pesos = [1 => 1, 2 => 1, 3 => 1.5, 4 => 1, 5 => 2, 6 => 1, 7 => 1, 8 => 1, 9 => 0.5];
+// Busca regras de desempate cadastradas no banco de dados (Criterios_desempate)
+$stmtDesempateRegras = $pdo->query("
+    SELECT cd.*, ca.nome AS nome_criterio_avaliacao, cf.nome_campo AS nome_campo_dinamico
+    FROM Criterios_desempate cd
+    LEFT JOIN Criterios_avaliacao ca ON cd.id_criterio_avaliacao = ca.id
+    LEFT JOIN Campos_formulario cf ON cd.id_campo_formulario = cf.id
+    WHERE cd.ativo = 1
+    ORDER BY cd.ordem_prioridade ASC
+");
+$regrasDesempateBanco = $stmtDesempateRegras->fetchAll(PDO::FETCH_ASSOC);
+
+// Carrega valores de campos dinâmicos para desempate se necessário
+$valoresCamposEscolas = [];
+if (!empty($trabalhos_ranking_bruto)) {
+    $idsEscolasRank = array_unique(array_filter(array_column($trabalhos_ranking_bruto, 'id_escolas')));
+    if (!empty($idsEscolasRank)) {
+        $inEscolas = implode(',', array_fill(0, count($idsEscolasRank), '?'));
+        $stmtVal = $pdo->prepare("SELECT id_campo, id_registro, valor FROM Valores_campos WHERE id_registro IN ($inEscolas)");
+        $stmtVal->execute(array_values($idsEscolasRank));
+        while ($vRow = $stmtVal->fetch(PDO::FETCH_ASSOC)) {
+            $valoresCamposEscolas[$vRow['id_registro']][$vRow['id_campo']] = $vRow['valor'];
+        }
+    }
+}
+
+$pesos = $pesos_criterios;
+if (empty($pesos)) {
+    $pesos = [1 => 1.0];
+}
 
 $calculaMediaPonderada = function ($notas, $pesos) {
     $somaNotas = 0;
@@ -321,42 +322,35 @@ $calculaMediaPonderada = function ($notas, $pesos) {
 $dados_ranking_trabalhos = [];
 foreach ($trabalhos_ranking_bruto as $row) {
     $id_trabalho = $row['id_trabalhos'];
+    $id_escola = $row['id_escolas'] ?? null;
     $notasPorJurado = $notasPorTrabalhoRank[$id_trabalho] ?? [];
     $jurados = array_keys($notasPorJurado);
     sort($jurados);
 
-    $mediaJurado1 = isset($jurados[0]) ? $calculaMediaPonderada($notasPorJurado[$jurados[0]], $pesos) : null;
-    $mediaJurado2 = isset($jurados[1]) ? $calculaMediaPonderada($notasPorJurado[$jurados[1]], $pesos) : null;
-
-    if ($mediaJurado1 !== null && $mediaJurado2 !== null) {
-        $notaFinal = ($mediaJurado1 + $mediaJurado2) / 2;
-    } elseif ($mediaJurado1 !== null) {
-        $notaFinal = $mediaJurado1;
-    } elseif ($mediaJurado2 !== null) {
-        $notaFinal = $mediaJurado2;
-    } else {
-        $notaFinal = null;
+    $mediasJurados = [];
+    foreach ($jurados as $jId) {
+        $mJur = $calculaMediaPonderada($notasPorJurado[$jId], $pesos);
+        if ($mJur !== null) {
+            $mediasJurados[] = $mJur;
+        }
     }
 
-    $criteriosMedios = [];
-    foreach ($pesos as $idx => $_) {
-        $crit = $idx;
-        $nota1 = isset($jurados[0]) ? ($notasPorJurado[$jurados[0]][$crit] ?? null) : null;
-        $nota2 = isset($jurados[1]) ? ($notasPorJurado[$jurados[1]][$crit] ?? null) : null;
+    $notaFinal = count($mediasJurados) > 0 ? (array_sum($mediasJurados) / count($mediasJurados)) : null;
 
-        if ($nota1 !== null && $nota2 !== null) {
-            $criteriosMedios[$crit] = ($nota1 + $nota2) / 2;
-        } elseif ($nota1 !== null) {
-            $criteriosMedios[$crit] = $nota1;
-        } elseif ($nota2 !== null) {
-            $criteriosMedios[$crit] = $nota2;
-        } else {
-            $criteriosMedios[$crit] = null;
+    $criteriosMedios = [];
+    foreach ($pesos as $crit => $_) {
+        $notasCrit = [];
+        foreach ($jurados as $jId) {
+            if (isset($notasPorJurado[$jId][$crit])) {
+                $notasCrit[] = $notasPorJurado[$jId][$crit];
+            }
         }
+        $criteriosMedios[$crit] = count($notasCrit) > 0 ? (array_sum($notasCrit) / count($notasCrit)) : null;
     }
 
     $dados_ranking_trabalhos[] = [
         'id_trabalhos' => $id_trabalho,
+        'id_escolas' => $id_escola,
         'titulo' => $row['titulo'],
         'escola_nome' => $row['escola_nome'],
         'nome_categoria' => $row['nome_categoria'],
@@ -365,51 +359,73 @@ foreach ($trabalhos_ranking_bruto as $row) {
         'media_trabalho' => $notaFinal,
         'criterios' => $criteriosMedios,
         'criterio_desempate' => null,
-        'IDEB' => is_numeric($row['IDEB']) ? (float)$row['IDEB'] : null,
-        'total_trabalhos' => is_numeric($row['total_trabalhos']) ? (int)$row['total_trabalhos'] : 0,
+        'valores_campos' => $valoresCamposEscolas[$id_escola] ?? []
     ];
 }
 
-function comparaTrabalhos($a, $b, $criteriosDesempate) {
-    if ($a['media_trabalho'] > $b['media_trabalho']) return -1;
-    if ($a['media_trabalho'] < $b['media_trabalho']) return 1;
+function comparaTrabalhosDinamicos($a, $b, $regrasDesempate) {
+    $medA = $a['media_trabalho'] ?? -1;
+    $medB = $b['media_trabalho'] ?? -1;
+    if ($medA > $medB) return -1;
+    if ($medA < $medB) return 1;
 
-    foreach ($criteriosDesempate as $crit) {
-        $notaA = $a['criterios'][$crit] ?? 0;
-        $notaB = $b['criterios'][$crit] ?? 0;
-        if ($notaA > $notaB) return -1;
-        if ($notaA < $notaB) return 1;
+    foreach ($regrasDesempate as $regra) {
+        $valA = 0;
+        $valB = 0;
+        if (!empty($regra['id_criterio_avaliacao'])) {
+            $idCrit = (int)$regra['id_criterio_avaliacao'];
+            $valA = (float)($a['criterios'][$idCrit] ?? 0);
+            $valB = (float)($b['criterios'][$idCrit] ?? 0);
+        } elseif (!empty($regra['id_campo_formulario'])) {
+            $idCampo = (int)$regra['id_campo_formulario'];
+            $valA = (float)($a['valores_campos'][$idCampo] ?? 0);
+            $valB = (float)($b['valores_campos'][$idCampo] ?? 0);
+        }
+
+        if ($valA != $valB) {
+            $direcao = strtoupper($regra['direcao'] ?? 'DESC');
+            if ($direcao === 'ASC') {
+                return ($valA < $valB) ? -1 : 1;
+            } else {
+                return ($valA > $valB) ? -1 : 1;
+            }
+        }
     }
-
-    if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
-    if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
-
-    if ($a['IDEB'] < $b['IDEB']) return -1;
-    if ($a['IDEB'] > $b['IDEB']) return 1;
 
     return 0;
 }
 
-function criterioDesempateUsado($a, $b, $criteriosDesempate) {
-    foreach ($criteriosDesempate as $index => $crit) {
-        $notaA = $a['criterios'][$crit] ?? 0;
-        $notaB = $b['criterios'][$crit] ?? 0;
-        if ($notaA != $notaB) {
-            return ['indice' => $index + 1, 'criterio' => "Critério #" . ($index + 1)];
+function criterioDesempateUsadoDinamico($a, $b, $regrasDesempate) {
+    foreach ($regrasDesempate as $regra) {
+        $valA = 0;
+        $valB = 0;
+        $nomeRegra = $regra['nome_regra'] ?? 'Critério de Desempate';
+
+        if (!empty($regra['id_criterio_avaliacao'])) {
+            $idCrit = (int)$regra['id_criterio_avaliacao'];
+            $valA = (float)($a['criterios'][$idCrit] ?? 0);
+            $valB = (float)($b['criterios'][$idCrit] ?? 0);
+            if (!empty($regra['nome_criterio_avaliacao'])) {
+                $nomeRegra = $regra['nome_criterio_avaliacao'];
+            }
+        } elseif (!empty($regra['id_campo_formulario'])) {
+            $idCampo = (int)$regra['id_campo_formulario'];
+            $valA = (float)($a['valores_campos'][$idCampo] ?? 0);
+            $valB = (float)($b['valores_campos'][$idCampo] ?? 0);
+            if (!empty($regra['nome_campo_dinamico'])) {
+                $nomeRegra = $regra['nome_campo_dinamico'];
+            }
         }
-    }
-    if ($a['total_trabalhos'] != $b['total_trabalhos']) {
-        return ['indice' => 'Trabalhos', 'criterio' => 'Maior Nº de trabalhos'];
-    }
-    if ($a['IDEB'] != $b['IDEB']) {
-        return ['indice' => 'IDEB', 'criterio' => 'Menor IDEB'];
+
+        if ($valA != $valB) {
+            return ['criterio' => $nomeRegra];
+        }
     }
     return null;
 }
 
-$criteriosDesempate = [1, 2, 4, 3, 5, 6, 7];
-usort($dados_ranking_trabalhos, function ($a, $b) use ($criteriosDesempate) {
-    return comparaTrabalhos($a, $b, $criteriosDesempate);
+usort($dados_ranking_trabalhos, function ($a, $b) use ($regrasDesempateBanco) {
+    return comparaTrabalhosDinamicos($a, $b, $regrasDesempateBanco);
 });
 
 for ($i = 0; $i < count($dados_ranking_trabalhos) - 1; $i++) {
@@ -417,7 +433,7 @@ for ($i = 0; $i < count($dados_ranking_trabalhos) - 1; $i++) {
     $proximo = $dados_ranking_trabalhos[$i + 1];
 
     if ($atual['media_trabalho'] !== null && $proximo['media_trabalho'] !== null && abs($atual['media_trabalho'] - $proximo['media_trabalho']) < 0.0001) {
-        $criterioUsado = criterioDesempateUsado($atual, $proximo, $criteriosDesempate);
+        $criterioUsado = criterioDesempateUsadoDinamico($atual, $proximo, $regrasDesempateBanco);
         if ($criterioUsado !== null) {
             $dados_ranking_trabalhos[$i]['criterio_desempate'] = $criterioUsado;
             $dados_ranking_trabalhos[$i + 1]['criterio_desempate'] = null;
@@ -521,17 +537,20 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
       <div class="col-12 col-sm-6 col-xl-3">
         <div class="kpi-panel-card">
           <div class="d-flex justify-content-between align-items-start">
-            <span class="kpi-label">MÉDIA GERAL IDEB</span>
+            <span class="kpi-label">TRABALHOS AVALIADOS</span>
             <div class="kpi-icon-box green-soft">
               <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                <polyline points="17 6 23 6 23 12"></polyline>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
               </svg>
             </div>
           </div>
-          <div class="kpi-number"><?= number_format($media_ideb, 1, '.', '') ?><span class="kpi-subnum">/10</span></div>
+          <div class="kpi-number"><?= $total_avaliacoes_feitas ?><span class="kpi-subnum">/<?= $total_trabalhos_banco ?></span></div>
           <div class="kpi-meta text-success-meta">
-            <strong><?= $qtd_ideb_validos ?></strong> escolas com IDEB informado
+            <strong><?= $total_trabalhos_banco > 0 ? round(($total_avaliacoes_feitas / $total_trabalhos_banco) * 100, 1) : 0 ?>%</strong> concluídos
           </div>
         </div>
       </div>
@@ -558,17 +577,19 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
       <div class="col-12 col-sm-6 col-xl-3">
         <div class="kpi-panel-card">
           <div class="d-flex justify-content-between align-items-start">
-            <span class="kpi-label">META IDEB ATINGIDA</span>
+            <span class="kpi-label">JURADOS CADASTRADOS</span>
             <div class="kpi-icon-box green-soft">
               <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
             </div>
           </div>
-          <div class="kpi-number"><?= number_format($perc_meta, 1, '.', '') ?>%</div>
+          <div class="kpi-number"><?= $total_jurados_banco ?></div>
           <div class="kpi-meta text-muted-meta">
-            <strong><?= $acima_meta_count ?></strong> de <strong><?= $qtd_ideb_validos ?></strong> atingiram meta (6.0+)
+            Avaliando trabalhos da rede
           </div>
         </div>
       </div>
@@ -634,137 +655,57 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
       </form>
     </div>
 
-    <!-- Bloco Principal 1: Gráfico de Barras com Card Limpo -->
-    <div class="main-card-analytic card-categorias mb-4">
-      <div class="card-header-clean d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <div class="d-flex align-items-center gap-2">
-            <h2 class="section-title">Distribuição de Escolas por Categoria</h2>
-            <span class="badge-count-pill"><?= count($dados_categorias) ?> Categorias</span>
-          </div>
-          <p class="section-subtitle">Volume absoluto de unidades escolares ativas por tipologia de ensino</p>
-        </div>
-        <div class="legend-header-group d-flex align-items-center gap-3">
-          <div class="legend-item"><span class="legend-box green"></span> Número de Escolas</div>
-          <div class="legend-divider">|</div>
-          <div class="legend-total">Total: <strong><?= $total_escolas_count ?> escolas</strong></div>
-        </div>
-      </div>
-
-      <div class="chart-main-box">
-        <canvas id="graficoBarra"></canvas>
-      </div>
-    </div>
-
-    <!-- Bloco Principal 2: Desempenho Educacional IDEB por Escola + Radar Lateral -->
-    <div class="main-card-analytic mb-4">
-      <div class="card-header-clean d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-          <h2 class="section-title">Desempenho Educacional: Valor do IDEB por Escola</h2>
-          <p class="section-subtitle">Matriz comparativa com metas e análise por quartis</p>
-        </div>
-        <div class="target-legend-pills d-flex align-items-center gap-3 flex-wrap">
-          <span class="legend-tag"><span class="dot-meta green"></span> adequado (IDEB &ge; 6.0)</span>
-          <span class="legend-tag"><span class="dot-meta yellow"></span> Médio (regular) (5.0 - 5.9)</span>
-          <span class="legend-tag"><span class="dot-meta red"></span> Baixo (&lt; 5.0)</span>
-        </div>
-      </div>
-
-      <div class="row g-4 mt-2">
-        <div class="col-12 col-lg-8">
-          <div class="table-subheaders d-flex justify-content-between align-items-center px-3 mb-2 text-uppercase" style="font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; color: #000000;">
-            <span>UNIDADE ESCOLAR</span>
-            <div class="d-flex align-items-center gap-3">
-              <span style="width: 236px; text-align: center;">INDICADOR IDEB</span>
-              <span style="width: 110px; text-align: center;">SITUAÇÃO</span>
-            </div>
-          </div>
-
-          <div class="school-bars-list d-flex flex-column gap-2" id="listaEscolasIdeb">
-            <?php 
-              $idx = 1;
-              foreach ($dados_Escola as $esc): 
-                $valIdeb = (float)$esc['IDEB'];
-                $percBarra = min(100, max(5, ($valIdeb / 10) * 100));
-                
-                if ($valIdeb >= 6.0) {
-                  $badgeClass = 'status-green';
-                  $badgeText  = 'adequado';
-                  $barColor   = 'var(--verde-saeb)';
-                } elseif ($valIdeb >= 5.0) {
-                  $badgeClass = 'status-yellow';
-                  $badgeText  = 'Médio (regular)';
-                  $barColor   = '#f59e0b';
-                } else {
-                  $badgeClass = 'status-red';
-                  $badgeText  = 'Baixo';
-                  $barColor   = '#ef4444';
-                }
-                $isOculto = $idx > 10 ? 'd-none item-escola-extra' : '';
-            ?>
-              <div class="school-row-card <?= $isOculto ?>">
-                <div class="school-info-col">
-                  <span class="school-index"><?= sprintf('%02d', $idx++) ?></span>
-                  <span class="school-name text-truncate" title="<?= htmlspecialchars($esc['nome']) ?>">
-                    <?= htmlspecialchars($esc['nome']) ?>
-                  </span>
-                  <?php if (!empty($esc['tipo_escola'])): ?>
-                    <span class="school-type-pill"><?= htmlspecialchars($esc['tipo_escola']) ?></span>
-                  <?php endif; ?>
-                </div>
-
-                <div class="school-metric-col d-flex align-items-center gap-3">
-                  <div class="bar-container-track">
-                    <div class="bar-progress" style="width: <?= $percBarra ?>%; background-color: <?= $barColor ?>;"></div>
-                    <div class="bar-meta-indicator" style="left: 60%;" title="Meta Estadual: 6.0"></div>
-                  </div>
-                  <span class="school-score-val" style="color: <?= $barColor ?>;"><?= number_format($valIdeb, 1, '.', '') ?></span>
-                  <span class="status-pill <?= $badgeClass ?>"><?= $badgeText ?></span>
-                </div>
-              </div>
-            <?php endforeach; ?>
-
-            <?php if (empty($dados_Escola)): ?>
-              <div class="text-center py-4 text-muted">Nenhuma escola encontrada para os filtros selecionados.</div>
-            <?php endif; ?>
-
-            <?php if (count($dados_Escola) > 10): ?>
-              <div class="text-center mt-3">
-                <button type="button" class="btn btn-sm btn-outline-success fw-bold rounded-pill px-4 py-2" id="btnToggleRankingEscolas" style="border-color: #4C8F5A; color: #4C8F5A;">
-                  <i class="bi bi-chevron-down me-1"></i> Ver ranking completo (+<?= count($dados_Escola) - 10 ?> escolas)
-                </button>
-              </div>
-            <?php endif; ?>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-4">
-          <div class="radar-box-card h-100 d-flex flex-column justify-content-between p-4">
+    <!-- Bloco 1: Distribuição de Escolas e Gráfico Radar de Critérios -->
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-xl-7">
+        <div class="main-card-analytic card-categorias h-100">
+          <div class="card-header-clean d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="radar-card-title mb-0">Equilíbrio por Critérios</h5>
-                <span class="badge-consolidado">9 CRITÉRIOS</span>
+              <div class="d-flex align-items-center gap-2">
+                <h2 class="section-title">Distribuição de Escolas por Categoria</h2>
+                <span class="badge-count-pill"><?= count($dados_categorias) ?> Categorias</span>
               </div>
-              <p class="radar-card-desc">Visualização sintetizada dos 9 critérios oficiais de avaliação científica de todos os trabalhos da rede.</p>
-              
-              <div class="radar-canvas-wrap my-3" style="position: relative; height: 260px;">
-                <canvas id="graficoRadar"></canvas>
-              </div>
+              <p class="section-subtitle">Volume absoluto de unidades escolares ativas por tipologia de ensino</p>
             </div>
+            <div class="legend-header-group d-flex align-items-center gap-3">
+              <div class="legend-item"><span class="legend-box green"></span> Número de Escolas</div>
+              <div class="legend-divider">|</div>
+              <div class="legend-total">Total: <strong><?= $total_escolas_count ?> escolas</strong></div>
+            </div>
+          </div>
 
-            <div class="radar-metrics-bottom pt-3 border-top">
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted" style="font-size: 0.85rem;">Critério com Maior Média:</span>
-                <strong style="color: var(--verde-primario); font-size: 0.85rem;"><?= htmlspecialchars($melhor_criterio_nome) ?> (<?= number_format($melhor_criterio_nota, 1) ?>)</strong>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted" style="font-size: 0.85rem;">Jurados Cadastrados:</span>
-                <strong style="font-size: 0.85rem;"><?= $total_jurados_banco ?> jurados</strong>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span class="text-muted" style="font-size: 0.85rem;">Trabalhos Avaliados:</span>
-                <strong style="font-size: 0.85rem;"><?= $total_avaliacoes_feitas ?> de <?= $total_trabalhos_banco ?></strong>
-              </div>
+          <div class="chart-main-box" style="height: 380px;">
+            <canvas id="graficoBarra"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-5">
+        <div class="radar-box-card h-100 d-flex flex-column justify-content-between p-4">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="radar-card-title mb-0">Equilíbrio por Critérios</h5>
+              <span class="badge-consolidado"><?= count($todos_criterios_oficiais) ?> CRITÉRIOS</span>
+            </div>
+            <p class="radar-card-desc">Visualização sintetizada dos <?= count($todos_criterios_oficiais) ?> critérios oficiais de avaliação científica de todos os trabalhos da rede.</p>
+            
+            <div class="radar-canvas-wrap my-3" style="position: relative; height: 280px;">
+              <canvas id="graficoRadar"></canvas>
+            </div>
+          </div>
+
+          <div class="radar-metrics-bottom pt-3 border-top">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted" style="font-size: 0.85rem;">Critério com Maior Média:</span>
+              <strong style="color: var(--verde-primario); font-size: 0.85rem;"><?= htmlspecialchars($melhor_criterio_nome) ?> (<?= number_format($melhor_criterio_nota, 1) ?>)</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted" style="font-size: 0.85rem;">Jurados Cadastrados:</span>
+              <strong style="font-size: 0.85rem;"><?= $total_jurados_banco ?> jurados</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted" style="font-size: 0.85rem;">Trabalhos Avaliados:</span>
+              <strong style="font-size: 0.85rem;"><?= $total_avaliacoes_feitas ?> de <?= $total_trabalhos_banco ?></strong>
             </div>
           </div>
         </div>
@@ -835,8 +776,8 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
         </div>
       </div>
 
-      <div class="column mt-2">
-        <div class="col-12 col-lg-8">
+      <div class="row mt-2">
+        <div class="col-12">
           <div class="table-subheaders d-flex justify-content-between px-3 mb-2 text-uppercase text-muted" style=" font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
             <span>TÍTULO DO TRABALHO / ESCOLA</span>
             <div class="d-flex gap-5">
@@ -861,7 +802,7 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
                   $barColor = '#ef4444';
                 }
             ?>
-              <div class="school-row-card" style="width:80vw;">
+              <div class="school-row-card w-100">
                 <div class="school-info-col">
                   <span class="school-index"><?= sprintf('%02d', $idxTrab++) ?></span>
                   <div class="d-flex flex-column text-truncate">
@@ -949,7 +890,7 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
     const labelsCategorias = <?php echo $json_labels; ?>;
     const dadosQuantidades = <?php echo $json_dados; ?>;
 
-    const paletaCores = ['#4C8F5A', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#64748b'];
+    const paletaCores = ['#3b7e4a', '#2563eb', '#f59e0b', '#7c3aed', '#db2777', '#0891b2', '#059669', '#475569'];
     const bgColors = labelsCategorias.map((_, i) => paletaCores[i % paletaCores.length]);
 
     // Plugin para desenhar o número na ponta de cada barra
@@ -1034,14 +975,14 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
           label: 'Média de Avaliação',
           data: radarValores,
           fill: true,
-          backgroundColor: 'rgba(76, 143, 90, 0.35)',
-          borderColor: '#2e7d32',
-          pointBackgroundColor: '#2e7d32',
+          backgroundColor: 'rgba(59, 126, 74, 0.25)',
+          borderColor: '#2c633a',
+          pointBackgroundColor: '#2c633a',
           pointBorderColor: '#ffffff',
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverBackgroundColor: '#ffffff',
-          pointHoverBorderColor: '#2e7d32',
+          pointHoverBorderColor: '#2c633a',
           borderWidth: 2.5
         }]
       },
@@ -1063,25 +1004,10 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
         }
       }
     });
-
-    // Gráfico Polar
-    const escolasNomes = <?php echo $json_escolas_nomes; ?>;
-    const escolasideb = <?php echo $json_escolas_ideb; ?>;
-
-    function gerarCorEscola(index, total) {
-      const hue = (index * (360 / Math.max(total, 1))) % 360;
-      return {
-        bg: `hsla(${hue}, 70%, 55%, 0.65)`,
-        border: `hsl(${hue}, 75%, 40%)`
-      };
-    }
-
-
-    // Gráfico de Barras Horizontal do Ranking de Trabalhos (Opção B: Gradiente Sequencial de Intensidade)
+    // Gráfico de Barras Horizontal do Ranking de Trabalhos (Gradiente Sequencial de Intensidade)
     const rankingTrabTitulos = <?php echo $json_ranking_trab_titulos; ?>;
     const rankingTrabNotas = <?php echo $json_ranking_trab_notas; ?>;
 
-    // Opção B: Começa no verde profundo (#166534) e clareia com saturação firme, sem ficar apagado
     const paletaVerdeGradiente = [
       '#14532d', // 1º Lugar: Verde Floresta Profundo
       '#166534', // 2º Lugar: Verde Escuro
@@ -1092,13 +1018,12 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
       '#059669', // 7º Lugar: Verde Médio
       '#34d399', // 8º Lugar: Verde Menta Intenso
       '#4ade80', // 9º Lugar: Verde Claro Vivo
-      '#6ee7b7'  // 10º Lugar: Verde Suave Firme (bem visível, sem tom lavado)
+      '#6ee7b7'  // 10º Lugar: Verde Suave Firme
     ];
 
     const coresRankingPodio = rankingTrabNotas.map((_, idx) => paletaVerdeGradiente[idx % paletaVerdeGradiente.length]);
     const hoverCoresPodio = rankingTrabNotas.map(() => '#0f3d1f');
 
-    // Menor nota válida (garante início em 95 para que a diferença salte aos olhos)
     const menorNotaReal = Math.min(...rankingTrabNotas.filter(n => n > 0), 98);
     const pisoEixoX = Math.min(95, Math.floor(menorNotaReal) - 1);
 
@@ -1191,25 +1116,6 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
         }
       }
     });
-
-    // Controle de expansão do Ranking de Escolas (Top 10 -> Completo)
-    const btnToggleEscolas = document.getElementById('btnToggleRankingEscolas');
-    if (btnToggleEscolas) {
-      let expandido = false;
-      const extras = document.querySelectorAll('.item-escola-extra');
-      const totalExtras = extras.length;
-
-      btnToggleEscolas.addEventListener('click', () => {
-        expandido = !expandido;
-        extras.forEach(el => el.classList.toggle('d-none', !expandido));
-        
-        if (expandido) {
-          btnToggleEscolas.innerHTML = '<i class="bi bi-chevron-up me-1"></i> Mostrar apenas Top 10';
-        } else {
-          btnToggleEscolas.innerHTML = `<i class="bi bi-chevron-down me-1"></i> Ver ranking completo (+${totalExtras} escolas)`;
-        }
-      });
-    }
   </script>
 </body>
 </html>

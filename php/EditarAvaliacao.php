@@ -31,20 +31,38 @@ try {
 
     $pdo->beginTransaction();
 
-    // Loop para atualizar os 9 critérios listados na tabela do HTML
-    for ($i = 1; $i <= 9; $i++) {
-        if (isset($_POST["criterio$i"])) {
-            // Nota vem no formato brasileiro (9,50). Precisamos mudar para americano (9.50) para o BD.
-            $notaFormatada = str_replace(',', '.', $_POST["criterio$i"]);
-            $comentario = isset($_POST["comentario$i"]) ? trim($_POST["comentario$i"]) : '';
+    $stmtUpdate = $pdo->prepare("
+        UPDATE avaliacoes 
+        SET nota = ?, comentario = ?, data_avaliacao = NOW() 
+        WHERE id_trabalho = ? AND id_jurado = ? AND criterio = ?
+    ");
 
-            $stmt = $pdo->prepare("
-                UPDATE avaliacoes 
-                SET nota = ?, comentario = ?, data_avaliacao = NOW() 
-                WHERE id_trabalho = ? AND id_jurado = ? AND criterio = ?
-            ");
-            
-            $stmt->execute([$notaFormatada, $comentario, $idTrabalho, $idJurado, $i]);
+    $stmtInsert = $pdo->prepare("
+        INSERT INTO avaliacoes (id_trabalho, id_jurado, criterio, nota, comentario)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+
+    $stmtCheckCrit = $pdo->prepare("
+        SELECT id_avaliacao FROM avaliacoes 
+        WHERE id_trabalho = ? AND id_jurado = ? AND criterio = ?
+    ");
+
+    // Identifica todos os critérios passados via POST (ex: criterio1, criterio2, etc.)
+    foreach ($_POST as $key => $val) {
+        if (strpos($key, 'criterio') === 0) {
+            $numCrit = substr($key, 8);
+            if (is_numeric($numCrit)) {
+                $idCrit = (int)$numCrit;
+                $notaFormatada = str_replace(',', '.', $val);
+                $comentario = isset($_POST["comentario$idCrit"]) ? trim($_POST["comentario$idCrit"]) : '';
+
+                $stmtCheckCrit->execute([$idTrabalho, $idJurado, $idCrit]);
+                if ($stmtCheckCrit->fetch()) {
+                    $stmtUpdate->execute([$notaFormatada, $comentario, $idTrabalho, $idJurado, $idCrit]);
+                } else {
+                    $stmtInsert->execute([$idTrabalho, $idJurado, $idCrit, $notaFormatada, $comentario]);
+                }
+            }
         }
     }
 

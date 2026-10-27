@@ -11,6 +11,23 @@ ORDER BY Escolas.id_escolas DESC";
 $result = $pdo->query($sql);
 $escolas = $result->fetchAll(PDO::FETCH_ASSOC);
 $total_escolas = count($escolas);
+
+// Busca os campos dinâmicos ativos para o formulário de escolas
+$stmtCampos = $pdo->query("SELECT * FROM Campos_formulario WHERE ativo = 1 AND formulario = 'escola' ORDER BY id ASC");
+$campos_escola = $stmtCampos->fetchAll(PDO::FETCH_ASSOC);
+
+// Busca os valores dos campos dinâmicos preenchidos para as escolas
+$valores_por_escola = [];
+if (!empty($escolas) && !empty($campos_escola)) {
+    $ids_escolas = array_column($escolas, 'id_escolas');
+    $placeholders = implode(',', array_fill(0, count($ids_escolas), '?'));
+    $stmtValores = $pdo->prepare("SELECT id_campo, id_registro, valor FROM Valores_campos WHERE id_registro IN ($placeholders)");
+    $stmtValores->execute($ids_escolas);
+    $linhas_valores = $stmtValores->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($linhas_valores as $lv) {
+        $valores_por_escola[$lv['id_registro']][$lv['id_campo']] = $lv['valor'];
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -175,10 +192,11 @@ $total_escolas = count($escolas);
                         <tr>
                             <th class="ps-4">NOME</th>
                             <th>MUNICÍPIO</th>
-                            <th>TIPO</th>
-                            <th>IDE MÉDIO</th>
-                            <th>IDEB</th>
-                            <th>Total de trabalhos na fase escolar</th>
+                            <?php if (!empty($campos_escola)): ?>
+                                <?php foreach ($campos_escola as $campo): ?>
+                                    <th><?= htmlspecialchars(mb_strtoupper($campo['nome_campo'], 'UTF-8')) ?></th>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                             <?php
                             if ($_SESSION['Nivel_permissao'] === 0) {
                                 echo '<th class="text-center pe-4">AÇÕES</th>';
@@ -193,12 +211,15 @@ $total_escolas = count($escolas);
                                 <tr>
                                     <td class="ps-4 td-item-title" id="nome_escolas"><?= htmlspecialchars(($user_data['categoria_da_escola'] ?? '') . ' ' . $user_data['nome']) ?></td>
                                     <td><?= htmlspecialchars($user_data['municipio'] ?? '-') ?></td>
-                                    <td>
-                                        <span class="category-pill"><?= htmlspecialchars($user_data['focalizada'] ?? '-') ?></span>
-                                    </td>
-                                    <td><?= !empty($user_data['ide']) ? htmlspecialchars($user_data['ide']) : '—' ?></td>
-                                    <td class="fw-bold text-dark"><?= !empty($user_data['IDEB']) ? htmlspecialchars($user_data['IDEB']) : '—' ?></td>
-                                    <td class="fw-bold text-dark"><?= !empty($user_data['total_trabalhos']) ? htmlspecialchars($user_data['total_trabalhos']) : '—' ?></td>
+                                    <?php if (!empty($campos_escola)): ?>
+                                        <?php foreach ($campos_escola as $campo): 
+                                            $val = $valores_por_escola[$user_data['id_escolas']][$campo['id']] ?? null;
+                                        ?>
+                                            <td class="fw-semibold text-dark">
+                                                <?= ($val !== null && $val !== '') ? htmlspecialchars($val) : '—' ?>
+                                            </td>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                     <?php
                                     if ($_SESSION['Nivel_permissao'] === 0) {
                                         echo '<td class="text-center pe-4 text-nowrap">
@@ -225,7 +246,7 @@ $total_escolas = count($escolas);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Nenhuma escola cadastrada.</td>
+                                <td colspan="<?= 3 + count($campos_escola) ?>" class="text-center py-4 text-muted">Nenhuma escola cadastrada.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

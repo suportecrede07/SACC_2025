@@ -1,8 +1,8 @@
 :root {
-    --verde-fundo-sidebar: #4C8F5A;
-    --verde-primario: #4C8F5A;
-    --verde-saeb: #4C8F5A;
-    --verde-claro-soft: #edf6f0;
+    --verde-fundo-sidebar: #3b7e4a;
+    --verde-primario: #3b7e4a;
+    --verde-saeb: #3b7e4a;
+    --verde-claro-soft: #f0fdf4;
     --bg-page: #f8fafc;
     --text-main: #0f172a;
     --border-soft: #e2e8f0;
@@ -54,7 +54,7 @@ body.bg-surface {
 .pulse-dot {
     width: 8px;
     height: 8px;
-    background-color: #4C8F5A;
+    background-color: #3b7e4a;
     border-radius: 50%;
     box-shadow: 0 0 0 0 rgba(76, 143, 90, 0.7);
     animation: pulse 1.8s infinite;
@@ -111,7 +111,7 @@ body.bg-surface {
 
 .kpi-icon-box.green-soft {
     background-color: #edf6f0;
-    color: #4C8F5A;
+    color: #3b7e4a;
 }
 
 .kpi-number {
@@ -160,7 +160,7 @@ body.bg-surface {
 }
 
 .pill-select:focus {
-    border-color: #4C8F5A;
+    border-color: #3b7e4a;
     box-shadow: 0 0 0 3px rgba(76, 143, 90, 0.2);
 }
 
@@ -175,7 +175,7 @@ body.bg-surface {
 .main-card-analytic {
     background: #ffffff;
     border: 1px solid var(--border-soft);
-    border-top: 4px solid #4C8F5A;
+    border-top: 4px solid #3b7e4a;
     border-radius: 18px;
     padding: 28px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
@@ -184,7 +184,7 @@ body.bg-surface {
 .main-card-analytic.card-categorias {
     background: #e0e0e120;
     border: 1px solid #dfe1e2;
-    border-top: 4px solid #4C8F5A;
+    border-top: 4px solid #3b7e4a;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
 
@@ -220,7 +220,7 @@ body.bg-surface {
 }
 
 .legend-box.green {
-    background-color: #4C8F5A;
+    background-color: #3b7e4a;
 }
 
 .legend-item,
@@ -253,7 +253,7 @@ body.bg-surface {
 }
 
 .dot-meta.green {
-    background-color: #4C8F5A;
+    background-color: #3b7e4a;
 }
 
 .dot-meta.yellow {
@@ -395,7 +395,7 @@ body.bg-surface {
 .radar-box-card {
     background: #ffffff;
     border: 1px solid var(--border-soft);
-    border-top: 4px solid #4C8F5A;
+    border-top: 4px solid #3b7e4a;
     border-radius: 14px;
     min-height: 420px;
 }
@@ -419,7 +419,7 @@ body.bg-surface {
     font-weight: 800;
     letter-spacing: 0.05em;
     background-color: #edf6f0;
-    color: #4C8F5A;
+    color: #3b7e4a;
     padding: 2px 8px;
     border-radius: 6px;
 }
@@ -489,4 +489,8 @@ body.bg-surface {
 /* Forçar textos cinzas/muted para preto na página de gráficos */
 .analitico-layout .text-muted {
     color: #000000 !important;
+}
+
+#btnToggleRankingEscolas:hover{
+    color: #f9f9f9;
 }

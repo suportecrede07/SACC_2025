@@ -95,6 +95,23 @@ $chave = $idCat . '_' . $idArea;
   }
 }
 $pendentes = $totalAtribuidos - $avaliados;
+
+// Busca critérios avaliativos dinâmicos do banco de dados (Criterios_avaliacao)
+$criterios_banco = [];
+try {
+  $stmtCrit = $pdo->query("SELECT id, nome, peso, ordem FROM Criterios_avaliacao ORDER BY ordem ASC, id ASC");
+  $criterios_banco = $stmtCrit->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+  $criterios_banco = [];
+}
+
+// Mapeia exclusivamente os critérios cadastrados no banco de dados
+$criterios = [];
+foreach ($criterios_banco as $cb) {
+  $criterios[$cb['id']] = $cb['nome'];
+}
+$criterios_chaves = array_keys($criterios);
+$total_criterios = count($criterios);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -312,20 +329,6 @@ $pendentes = $totalAtribuidos - $avaliados;
             <form id="formAvaliacao" action="../php/SalvarAvaliacao.php" method="post">
               <input type="hidden" name="id_trabalho" id="id_trabalho" value="" />
 
-              <?php
-              $criterios = [
-                1 => "Criatividade e Inovação",
-                2 => "Relevância da pesquisa",
-                3 => "Conhecimento científico fundamentado e contextualização do problema abordado",
-                4 => "Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática: o conhecimento a serviço da vida coletiva",
-                5 => "Materiais e métodos conectados com os objetivos,resultados e conclusões",
-                6 => "Clareza e objetividade na linguagem apresentada",
-                7 => "Banner",
-                8 => "Caderno de campo",
-                9 => "Processo participativo e solidário"
-              ];
-              ?>
-
               <!-- VISÃO DESKTOP: Tabela Limpa (Visível em lg+ >= 992px) -->
               <div class="modal-table-container d-none d-lg-block">
                 <table class="table modal-table mb-0">
@@ -337,14 +340,14 @@ $pendentes = $totalAtribuidos - $avaliados;
                     </tr>
                   </thead>
                   <tbody>
-                    <?php foreach ($criterios as $index => $tituloCriterio): ?>
+                    <?php foreach ($criterios as $idCrit => $tituloCriterio): ?>
                       <tr>
-                        <td class="td-criterio-text"><?= $tituloCriterio ?></td>
+                        <td class="td-criterio-text"><?= htmlspecialchars($tituloCriterio) ?></td>
                         <td class="td-nota-input">
-                          <input type="text" inputmode="numeric" class="form-control nota-auto input-nota-clean desk-nota" data-index="<?= $index ?>" maxlength="5" placeholder="0,00" />
+                          <input type="text" inputmode="numeric" class="form-control nota-auto input-nota-clean desk-nota" data-index="<?= $idCrit ?>" maxlength="5" placeholder="0,00" />
                         </td>
                         <td class="td-comentario-input">
-                          <textarea class="form-control input-comentario-clean desk-comentario" data-index="<?= $index ?>" rows="1" placeholder=""></textarea>
+                          <textarea class="form-control input-comentario-clean desk-comentario" data-index="<?= $idCrit ?>" rows="1" placeholder=""></textarea>
                         </td>
                       </tr>
                     <?php endforeach; ?>
@@ -355,34 +358,37 @@ $pendentes = $totalAtribuidos - $avaliados;
               <!-- VISÃO TABLET E MOBILE: Accordion (Visível em telas < 992px) -->
               <div class="d-lg-none">
                 <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-                  <span id="progressoCriterios" class="text-secondary fw-semibold small">0 de 9 critérios avaliados</span>
+                  <span id="progressoCriterios" class="text-secondary fw-semibold small">0 de <?= $total_criterios ?> critérios avaliados</span>
                   <div class="bg-light px-3 py-1 rounded-pill border fw-bold text-dark small">
                     Média: <span id="mediaCalculada">--</span>
                   </div>
                 </div>
 
                 <div class="accordion d-flex flex-column gap-2" id="accordionCriterios">
-                  <?php foreach ($criterios as $index => $tituloCriterio): ?>
+                  <?php 
+                  $ordemExibicao = 1;
+                  foreach ($criterios as $idCrit => $tituloCriterio): 
+                  ?>
                     <div class="accordion-item border rounded-3 overflow-hidden shadow-sm">
-                      <h2 class="accordion-header" id="heading<?= $index ?>">
-                        <button class="accordion-button collapsed py-2 px-3 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $index ?>" aria-expanded="false" aria-controls="collapse<?= $index ?>">
+                      <h2 class="accordion-header" id="heading<?= $idCrit ?>">
+                        <button class="accordion-button collapsed py-2 px-3 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $idCrit ?>" aria-expanded="false" aria-controls="collapse<?= $idCrit ?>">
                           <div class="d-flex align-items-center w-100 me-2">
-                            <span class="badge rounded-circle text-white d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 24px; height: 24px; font-size: 0.78rem; background-color: #15803d;"><?= $index ?></span>
-                            <strong class="text-dark me-auto text-wrap me-2" style="font-size: 0.88rem; text-align: left;"><?= $tituloCriterio ?></strong>
-                            <span class="badge rounded-pill px-3 py-1 me-2 badge-status" id="badgeStatus<?= $index ?>" style="font-size: 0.72rem; background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;">PENDENTE</span>
+                            <span class="badge rounded-circle text-white d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 24px; height: 24px; font-size: 0.78rem; background-color: #15803d;"><?= $ordemExibicao++ ?></span>
+                            <strong class="text-dark me-auto text-wrap me-2" style="font-size: 0.88rem; text-align: left;"><?= htmlspecialchars($tituloCriterio) ?></strong>
+                            <span class="badge rounded-pill px-3 py-1 me-2 badge-status" id="badgeStatus<?= $idCrit ?>" style="font-size: 0.72rem; background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;">PENDENTE</span>
                           </div>
                         </button>
                       </h2>
-                      <div id="collapse<?= $index ?>" class="accordion-collapse collapse" aria-labelledby="heading<?= $index ?>" data-bs-parent="#accordionCriterios">
+                      <div id="collapse<?= $idCrit ?>" class="accordion-collapse collapse" aria-labelledby="heading<?= $idCrit ?>" data-bs-parent="#accordionCriterios">
                         <div class="accordion-body bg-light p-3 border-top">
                           <div class="row g-3">
                             <div class="col-12">
                               <label class="form-label fw-bold text-dark small mb-1">Nota (0 a 10):</label>
-                              <input type="text" inputmode="numeric" class="form-control nota-auto input-nota-clean mob-nota w-100" data-index="<?= $index ?>" maxlength="5" placeholder="0,00" style="width: 100% !important;" />
+                              <input type="text" inputmode="numeric" class="form-control nota-auto input-nota-clean mob-nota w-100" data-index="<?= $idCrit ?>" maxlength="5" placeholder="0,00" style="width: 100% !important;" />
                             </div>
                             <div class="col-12">
                               <label class="form-label fw-bold text-dark small mb-1">Comentário (opcional):</label>
-                              <textarea class="form-control input-comentario-clean mob-comentario w-100" data-index="<?= $index ?>" rows="2" placeholder="Digite seus comentários..." style="width: 100% !important;"></textarea>
+                              <textarea class="form-control input-comentario-clean mob-comentario w-100" data-index="<?= $idCrit ?>" rows="2" placeholder="Digite seus comentários..." style="width: 100% !important;"></textarea>
                             </div>
                           </div>
                         </div>
@@ -391,14 +397,13 @@ $pendentes = $totalAtribuidos - $avaliados;
                   <?php endforeach; ?>
                 </div>
 
-
               </div>
 
               <!-- CAMPOS REAIS DO FORMULÁRIO QUE SERÃO SUBMETIDOS -->
-              <?php for ($i = 1; $i <= 9; $i++): ?>
-                <input type="hidden" name="criterio<?= $i ?>" id="real_criterio<?= $i ?>" value="" />
-                <input type="hidden" name="comentario<?= $i ?>" id="real_comentario<?= $i ?>" value="" />
-              <?php endfor; ?>
+              <?php foreach ($criterios_chaves as $idCrit): ?>
+                <input type="hidden" name="criterio<?= $idCrit ?>" id="real_criterio<?= $idCrit ?>" value="" />
+                <input type="hidden" name="comentario<?= $idCrit ?>" id="real_comentario<?= $idCrit ?>" value="" />
+              <?php endforeach; ?>
 
               <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                 <button type="button" class="btn btn-modal-voltar" data-bs-dismiss="modal">Voltar</button>
@@ -502,14 +507,16 @@ $pendentes = $totalAtribuidos - $avaliados;
       atualizarResumoCriterios();
     }
 
+    const criterioIds = <?= json_encode($criterios_chaves) ?>;
+
     function atualizarResumoCriterios() {
       let avaliadosCount = 0;
       let somaNotas = 0;
 
-      for (let i = 1; i <= 9; i++) {
+      criterioIds.forEach(i => {
         const realNota = document.getElementById(`real_criterio${i}`);
         const badge = document.getElementById(`badgeStatus${i}`);
-        if (!realNota) continue;
+        if (!realNota) return;
 
         let valorStr = realNota.value.trim();
         let numero = parseFloat(valorStr.replace(',', '.'));
@@ -528,11 +535,11 @@ $pendentes = $totalAtribuidos - $avaliados;
             badge.style.cssText = 'font-size: 0.72rem; background-color: #fff7ed !important; color: #ea580c !important; border: 1px solid #ffedd5 !important;';
           }
         }
-      }
+      });
 
       const progressoEl = document.getElementById('progressoCriterios');
       if (progressoEl) {
-        progressoEl.textContent = `${avaliadosCount} de 9 critérios avaliados`;
+        progressoEl.textContent = `${avaliadosCount} de ${criterioIds.length} critérios avaliados`;
       }
 
       const mediaEl = document.getElementById('mediaCalculada');
@@ -611,7 +618,7 @@ $pendentes = $totalAtribuidos - $avaliados;
       botaoAbrirConfirmacao.addEventListener('click', () => {
         let valido = true;
 
-        for (let i = 1; i <= 9; i++) {
+        criterioIds.forEach(i => {
           const realNota = document.getElementById(`real_criterio${i}`);
           const deskInput = document.querySelector(`.desk-nota[data-index="${i}"]`);
           const mobInput = document.querySelector(`.mob-nota[data-index="${i}"]`);
@@ -635,7 +642,7 @@ $pendentes = $totalAtribuidos - $avaliados;
               syncCriterios(i, formatted, undefined);
             }
           }
-        }
+        });
 
         if (!valido) {
           alert("Corrija as notas inválidas (valores entre 0,00 e 10,00 com até 2 casas decimais).");
@@ -666,10 +673,10 @@ $pendentes = $totalAtribuidos - $avaliados;
       $('#modalArea').text($(this).data('area'));
       $('#id_trabalho').val($(this).data('id'));
 
-      // Limpar campos
-      for (let i = 1; i <= 9; i++) {
+      // Limpar campos dinâmicos
+      criterioIds.forEach(i => {
         syncCriterios(i, '', '');
-      }
+      });
       $('.nota-auto').removeClass('is-invalid');
 
       // Fechar accordions no mobile
@@ -691,9 +698,9 @@ $pendentes = $totalAtribuidos - $avaliados;
       let idTrabalho = $(this).data('id');
       $('#id_trabalho').val(idTrabalho);
 
-      for (let i = 1; i <= 9; i++) {
+      criterioIds.forEach(i => {
         syncCriterios(i, '', '');
-      }
+      });
       $('.nota-auto').removeClass('is-invalid');
 
       $.ajax({
@@ -708,7 +715,7 @@ $pendentes = $totalAtribuidos - $avaliados;
             alert(response.error);
             return;
           }
-          for (let i = 1; i <= 9; i++) {
+          criterioIds.forEach(i => {
             let criterioData = response['criterio' + i];
             if (criterioData) {
               let notaFormatada = parseFloat(criterioData.nota).toFixed(2).replace('.', ',');
@@ -716,13 +723,13 @@ $pendentes = $totalAtribuidos - $avaliados;
             } else {
               syncCriterios(i, '', '');
             }
-          }
+          });
         },
         error: function() {
           alert('Erro ao carregar as notas anteriores. Tente novamente.');
-          for (let i = 1; i <= 9; i++) {
+          criterioIds.forEach(i => {
             syncCriterios(i, '', '');
-          }
+          });
         }
       });
     });

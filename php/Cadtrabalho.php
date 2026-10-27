@@ -97,6 +97,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $ordem
         ]);
 
+        $id_trabalho = $pdo->lastInsertId();
+
+        // Grava as respostas dos campos dinâmicos na tabela Valores_campos
+        if (!empty($_POST['campos_dinamicos']) && is_array($_POST['campos_dinamicos']) && !empty($id_trabalho)) {
+            $stmtCampos = $pdo->prepare("INSERT INTO Valores_campos (id_campo, id_registro, valor) VALUES (?, ?, ?)");
+            foreach ($_POST['campos_dinamicos'] as $id_campo => $valor) {
+                if ($valor !== '' && $valor !== null) {
+                    $stmtCampos->execute([
+                        (int)$id_campo,
+                        (int)$id_trabalho,
+                        trim($valor)
+                    ]);
+                }
+            }
+        }
+
         $pdo->commit();
 
         header('Location: ../html/admin-dashboard.php?msg=sucesso');

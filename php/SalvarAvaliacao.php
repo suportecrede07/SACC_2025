@@ -37,19 +37,37 @@ try {
 
     $pdo->beginTransaction();
 
-    for ($i = 1; $i <= 9; $i++) {
-        $nota = isset($_POST["criterio$i"]) ? floatval(str_replace(',', '.', $_POST["criterio$i"])) : null;
-        $comentario = $_POST["comentario$i"] ?? null;
+    $stmtInsert = $pdo->prepare("
+        INSERT INTO Avaliacoes (id_trabalho, id_jurado, criterio, nota, comentario)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+
+    // Identifica todos os critérios passados via POST (ex: criterio1, criterio2, etc.)
+    $chavesCriterios = [];
+    foreach ($_POST as $key => $val) {
+        if (strpos($key, 'criterio') === 0) {
+            $numCrit = substr($key, 8);
+            if (is_numeric($numCrit)) {
+                $chavesCriterios[] = (int)$numCrit;
+            }
+        }
+    }
+    sort($chavesCriterios);
+
+    if (empty($chavesCriterios)) {
+        throw new Exception("Nenhum critério foi enviado para avaliação.");
+    }
+
+    foreach ($chavesCriterios as $idCrit) {
+        $valorRaw = $_POST["criterio$idCrit"] ?? null;
+        $nota = ($valorRaw !== null && $valorRaw !== '') ? floatval(str_replace(',', '.', $valorRaw)) : null;
+        $comentario = $_POST["comentario$idCrit"] ?? null;
 
         if ($nota === null || $nota < 0 || $nota > 10) {
-            throw new Exception("Nota inválida no critério $i");
+            throw new Exception("Nota inválida no critério $idCrit");
         }
 
-        $stmt = $pdo->prepare("
-            INSERT INTO Avaliacoes (id_trabalho, id_jurado, criterio, nota, comentario)
-            VALUES (?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([$id_trabalho, $id_jurado, $i, $nota, $comentario]);
+        $stmtInsert->execute([$id_trabalho, $id_jurado, $idCrit, $nota, $comentario]);
     }
 
     $pdo->commit();
