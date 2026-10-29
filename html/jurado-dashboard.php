@@ -96,10 +96,10 @@ $chave = $idCat . '_' . $idArea;
 }
 $pendentes = $totalAtribuidos - $avaliados;
 
-// Busca critérios avaliativos dinâmicos do banco de dados (Criterios_avaliacao)
+// Busca critérios avaliativos dinâmicos do banco de dados (apenas ativos)
 $criterios_banco = [];
 try {
-  $stmtCrit = $pdo->query("SELECT id, nome, peso, ordem FROM Criterios_avaliacao ORDER BY ordem ASC, id ASC");
+  $stmtCrit = $pdo->query("SELECT id, nome, peso, ordem FROM Criterios_avaliacao WHERE ativo = 1 ORDER BY ordem ASC, id ASC");
   $criterios_banco = $stmtCrit->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
   $criterios_banco = [];

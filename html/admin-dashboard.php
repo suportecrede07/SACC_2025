@@ -5,10 +5,17 @@ error_reporting(E_ALL);
 
 session_start();
 require_once '../php/Connect.php';
+require_once '../php/CalculoRanking.php';
 if (!isset($_SESSION['id_admin']) || !isset($_SESSION['usuario'])) {
   header('Location: ../html/login_adm.php');
   exit();
 }
+$categoriaFiltro = isset($_POST['categoria']) && $_POST['categoria'] !== ''
+  && filter_var($_POST['categoria'], FILTER_VALIDATE_INT) !== false
+  ? (int) $_POST['categoria'] : null;
+$areaFiltro = isset($_POST['area']) && $_POST['area'] !== ''
+  && filter_var($_POST['area'], FILTER_VALIDATE_INT) !== false
+  ? (int) $_POST['area'] : null;
 $categorias = $pdo->query("SELECT id_categoria, nome_categoria FROM Categorias")->fetchAll(PDO::FETCH_ASSOC);
 
 $areas = [];
@@ -57,25 +64,8 @@ if (!empty($_POST['trabalhos']) && !empty($_POST['jurado'])) {
   $mensagem_sucesso = "Associação realizada com sucesso!";
 }
 
-$sql = "SELECT 
-    t.id_trabalhos,
-    t.titulo,
-    e.nome AS escola,
-    c.nome_categoria,
-    a.nome_area,
-    e.IDEB,
-    e.total_trabalhos,
-    ce.categoria_da_escola AS categoria_escola
-FROM Trabalhos t
-LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
-LEFT JOIN Jurados j ON t.id_jurados = j.id_jurados
-LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria
-LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
-LEFT JOIN Areas a ON t.id_areas = a.id_area
-ORDER BY t.id_trabalhos DESC";
+// A classificação é calculada centralmente por CalculoRanking.php.
 
-$result = $pdo->query($sql);
-$row = $result->fetch(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->query("SELECT id_area,nome_area FROM Areas ORDER BY nome_area ASC");
 $areas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -202,33 +192,28 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
             </svg>
             Associar Jurado
           </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuario" style="background-color: #10b981;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <path d="M20 8v6M23 11h-6" />
+            </svg>
+            Cadastrar Usuário
+          </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar" style="background-color: #f59e0b;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Editar Usuário
+          </button>
+          <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioExcluir" style="background-color: #ef4444;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Apagar Usuários
+          </button>
         </div>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuario" style="background-color: lightgreen; color: black;">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <path d="M20 8v6M23 11h-6" />
-          </svg>
-          Cadastrar Usuario
-        </button>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar" style="background-color: lightsalmon; color: black;">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <path d="M20 8v6M23 11h-6" />
-          </svg>
-          Editar Usuario
-        </button>
-        <button class="admin-action-btn" data-bs-toggle="modal" data-bs-target="#modalUsuarioExcluir" style="background-color: lightcoral; color: black;">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <path d="M20 8v6M23 11h-6" />
-          </svg>
-          Apagar Usuarios
-        </button>
-        <br>
-        <br>
 
         <div class="modal fade" id="modalInstituicao" tabindex="-1" aria-labelledby="modalInstituicaoLabel"
           aria-hidden="true">
@@ -240,7 +225,7 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
               </div>
               <div class="modal-body">
                 <form method="POST" action="../php/Cadescola.php" id="idCadEscola">
-                  
+
                   <!-- SEÇÃO 1: DADOS FIXOS PADRÃO DA INSTITUIÇÃO -->
                   <h6 class="fw-bold text-dark mb-3">Dados da Instituição</h6>
 
@@ -273,9 +258,7 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
                   <!-- SEÇÃO 2: CAMPOS DINÂMICOS ADICIONAIS -->
                   <?php if (!empty($campos_escola)): ?>
                     <div class="mt-4 pt-3 border-top">
-                      <h6 class="fw-bold text-success mb-2">
-                        <i class="bi bi-plus-circle me-1"></i>Informações Adicionais (Campos Extras)
-                      </h6>
+                      <h6 class="fw-bold text-success mb-2">Informações Adicionais (Campos Extras)</h6>
                       <p class="text-muted small mb-3">Campos complementares configurados para o cadastro de escolas.</p>
                       <?php foreach ($campos_escola as $campo): ?>
                         <label for="campo_dinamico_<?= $campo['id'] ?>" class="form-label mt-2">
@@ -630,9 +613,7 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
                 <!-- SEÇÃO CAMPOS DINÂMICOS ADICIONAIS -->
                 <?php if (!empty($campos_trabalho)): ?>
                   <div class="mt-4 pt-3 border-top">
-                    <h6 class="fw-bold text-success mb-2">
-                      <i class="bi bi-plus-circle me-1"></i>Informações Adicionais (Campos Extras)
-                    </h6>
+                    <h6 class="fw-bold text-success mb-2">Informações Adicionais (Campos Extras)</h6>
                     <p class="text-muted small mb-3">Campos complementares configurados para o cadastro de trabalhos.</p>
                     <?php foreach ($campos_trabalho as $campo): ?>
                       <label for="campo_dinamico_trabalho_<?= $campo['id'] ?>" class="form-label mt-2">
@@ -772,23 +753,23 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
             <div class="col-md-5">
               <label class="admin-form-label">Categoria</label>
               <select id="ranking-categoria" class="form-select admin-form-select" name="categoria">
-                <option value="1" <?= ($categoria ?? '') == "1" ? "selected" : "" ?>>I - Ensino Médio</option>
-                <option value="2" <?= ($categoria ?? '') == "2" ? "selected" : "" ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
-                <option value="3" <?= ($categoria ?? '') == "3" ? "selected" : "" ?>>III - Pesquisa Júnior</option>
-                <option value="4" <?= ($categoria ?? '') == "4" ? "selected" : "" ?>>IV - PcD</option>
+                <option value="1" <?= ($categoriaFiltro ?? '') == "1" ? "selected" : "" ?>>I - Ensino Médio</option>
+                <option value="2" <?= ($categoriaFiltro ?? '') == "2" ? "selected" : "" ?>>II - Ensino Médio - Ações Afirmativas e CEJAs EM</option>
+                <option value="3" <?= ($categoriaFiltro ?? '') == "3" ? "selected" : "" ?>>III - Pesquisa Júnior</option>
+                <option value="4" <?= ($categoriaFiltro ?? '') == "4" ? "selected" : "" ?>>IV - PcD</option>
               </select>
             </div>
             <div class="col-md-5">
               <label class="admin-form-label">Área</label>
               <select id="ranking-area" class="form-select admin-form-select" name="area">
                 <option value="">-- Selecione a Área --</option>
-                <option value="1" <?= ($area ?? '') == "1" ? "selected" : "" ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
-                <option value="2" <?= ($area ?? '') == "2" ? "selected" : "" ?>>Matemática e suas Tecnologias - MT</option>
-                <option value="3" <?= ($area ?? '') == "3" ? "selected" : "" ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
-                <option value="4" <?= ($area ?? '') == "4" ? "selected" : "" ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
-                <option value="5" <?= ($area ?? '') == "5" ? "selected" : "" ?>>Robótica, Automação e Aplicação das TIC</option>
-                <option value="6" <?= ($area ?? '') == "6" ? "selected" : "" ?>>Ensino Fundamental</option>
-                <option value="7" <?= ($area ?? '') == "7" ? "selected" : "" ?>>Ensino Médio</option>
+                <option value="1" <?= ($areaFiltro ?? '') == "1" ? "selected" : "" ?>>Linguagens, Códigos e suas Tecnologias - LC</option>
+                <option value="2" <?= ($areaFiltro ?? '') == "2" ? "selected" : "" ?>>Matemática e suas Tecnologias - MT</option>
+                <option value="3" <?= ($areaFiltro ?? '') == "3" ? "selected" : "" ?>>Ciências da Natureza, Educação Ambiental e Engenharias - CN</option>
+                <option value="4" <?= ($areaFiltro ?? '') == "4" ? "selected" : "" ?>>Ciências Humanas e Sociais Aplicadas - CH</option>
+                <option value="5" <?= ($areaFiltro ?? '') == "5" ? "selected" : "" ?>>Robótica, Automação e Aplicação das TIC</option>
+                <option value="6" <?= ($areaFiltro ?? '') == "6" ? "selected" : "" ?>>Ensino Fundamental</option>
+                <option value="7" <?= ($areaFiltro ?? '') == "7" ? "selected" : "" ?>>Ensino Médio</option>
               </select>
             </div>
             <div class="col-md-2">
@@ -798,205 +779,21 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
         </form>
 
         <?php
-        require_once '../php/Connect.php';
-
-        $categoria = $_POST['categoria'] ?? null;
-        $area = $_POST['area'] ?? null;
-
-        $pesos = [
-          1 => 1,
-          2 => 1,
-          3 => 1.5,
-          4 => 1,
-          5 => 2,
-          6 => 1,
-          7 => 1,
-          8 => 1,
-          9 => 0.5
-        ];
-        $criteriosDesempate = [1, 2, 4, 3, 5, 6, 7, 8, 9];
-
-        $sql = "SELECT t.id_trabalhos, t.titulo, e.nome AS escola, e.focalizada, e.ide, e.IDEB, e.total_trabalhos,ce.categoria_da_escola, c.nome_categoria AS categoria, a.nome_area AS area
-    FROM Trabalhos t 
-    LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas 
-    LEFT JOIN Categorias c ON t.id_categoria = c.id_categoria 
-    LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
-    LEFT JOIN Areas a ON t.id_areas = a.id_area 
-    WHERE 1=1";
-        $params = [];
-
-        if (!empty($categoria)) {
-          $sql .= " AND t.id_categoria = :categoria";
-          $params[':categoria'] = $categoria;
-        }
-        if (!empty($area)) {
-          $sql .= " AND t.id_areas = :area";
-          $params[':area'] = $area;
-        }
-
-        $sql .= " ORDER BY t.id_trabalhos DESC";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-
-        $dados = [];
-
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-          $id_trabalho = $row['id_trabalhos'];
-
-          $sql_avaliacoes = "SELECT id_jurado, criterio, nota FROM Avaliacoes WHERE id_trabalho = :id_trabalho";
-          $stmt_av = $pdo->prepare($sql_avaliacoes);
-          $stmt_av->execute([':id_trabalho' => $id_trabalho]);
-          $avaliacoes = $stmt_av->fetchAll(PDO::FETCH_ASSOC);
-
-          $notasPorJurado = [];
-          foreach ($avaliacoes as $av) {
-            $jurado = $av['id_jurado'];
-            $crit = (int)$av['criterio'];
-            $nota = (float)$av['nota'];
-            if (!isset($notasPorJurado[$jurado])) {
-              $notasPorJurado[$jurado] = [];
-            }
-            $notasPorJurado[$jurado][$crit] = $nota;
-          }
-
-          $calculaMediaPonderada = function ($notas, $pesos) {
-            $somaNotas = 0;
-            $somaPesos = 0;
-            foreach ($pesos as $crit => $peso) {
-              $nota = $notas[$crit] ?? null;
-              if ($nota !== null) {
-                $somaNotas += $nota * $peso;
-                $somaPesos += $peso;
-              }
-            }
-            return $somaPesos > 0 ? ($somaNotas / $somaPesos) * 10 : null;
-          };
-
-          $jurados = array_keys($notasPorJurado);
-          sort($jurados);
-
-          $mediaJurado1 = isset($jurados[0]) ? $calculaMediaPonderada($notasPorJurado[$jurados[0]], $pesos) : null;
-          $mediaJurado2 = isset($jurados[1]) ? $calculaMediaPonderada($notasPorJurado[$jurados[1]], $pesos) : null;
-
-          if ($mediaJurado1 !== null && $mediaJurado2 !== null) {
-            $notaFinal = ($mediaJurado1 + $mediaJurado2) / 2;
-          } elseif ($mediaJurado1 !== null) {
-            $notaFinal = $mediaJurado1;
-          } elseif ($mediaJurado2 !== null) {
-            $notaFinal = $mediaJurado2;
-          } else {
-            $notaFinal = null;
-          }
-
-          $focalizada = strtolower($row['focalizada'] ?? '') === 'focalizada' ? true : false;
-          $ide = strtolower($row['ide'] ?? '') === 'sim' ? true : false;
-
-          $dados[] = [
-            'id_trabalho' => $id_trabalho,
-            'titulo' => $row['titulo'],
-            'escola' => $row['escola'],
-            'focalizada' => $focalizada,
-            'ide' => $ide,
-            'IDEB' => $row['IDEB'] ?? '-',
-            'total_trabalhos' => $row['total_trabalhos'] ?? '-',
-            'categoria' => $row['categoria'],
-            'area' => $row['area'],
-            'Modalidade' => $row['categoria_da_escola'],
-            'jurados' => [
-              1 => [
-                'id' => $jurados[0] ?? null,
-                'media_ponderada' => $mediaJurado1,
-                'criterios' => isset($jurados[0]) ? ($notasPorJurado[$jurados[0]] ?? []) : []
-              ],
-              2 => [
-                'id' => $jurados[1] ?? null,
-                'media_ponderada' => $mediaJurado2,
-                'criterios' => isset($jurados[1]) ? ($notasPorJurado[$jurados[1]] ?? []) : []
-              ],
-            ],
-            'criterios' => [],
-            'nota_final' => $notaFinal,
-            'criterio_desempate' => null,
-          ];
-
-          foreach ($pesos as $idx => $_) {
-            $crit = $idx;
-            $nota1 = isset($jurados[0]) ? ($notasPorJurado[$jurados[0]][$crit] ?? null) : null;
-            $nota2 = isset($jurados[1]) ? ($notasPorJurado[$jurados[1]][$crit] ?? null) : null;
-
-            if ($nota1 !== null && $nota2 !== null) {
-              $dados[count($dados) - 1]['criterios'][$crit] = ($nota1 + $nota2) / 2;
-            } elseif ($nota1 !== null) {
-              $dados[count($dados) - 1]['criterios'][$crit] = $nota1;
-            } elseif ($nota2 !== null) {
-              $dados[count($dados) - 1]['criterios'][$crit] = $nota2;
-            } else {
-              $dados[count($dados) - 1]['criterios'][$crit] = null;
-            }
-          }
-        }
-
-        function comparaTrabalhos($a, $b, $criteriosDesempate)
-        {
-          if ($a['nota_final'] > $b['nota_final']) return -1;
-          if ($a['nota_final'] < $b['nota_final']) return 1;
-          foreach ($criteriosDesempate as $crit) {
-            $notaA = $a['criterios'][$crit] ?? 0;
-            $notaB = $b['criterios'][$crit] ?? 0;
-            if ($notaA > $notaB) return -1;
-            if ($notaA < $notaB) return 1;
-          }
-          if ($a['total_trabalhos'] > $b['total_trabalhos']) return -1;
-          if ($a['total_trabalhos'] < $b['total_trabalhos']) return 1;
-
-          if ($a['IDEB'] > $b['IDEB']) return -1;
-          if ($a['IDEB'] < $b['IDEB']) return 1;
-
-          /*
-          if ($a['focalizada'] && !$b['focalizada']) return -1;
-          if (!$a['focalizada'] && $b['focalizada']) return 1;
-          if ($a['ide'] && !$b['ide']) return -1;
-          if (!$a['ide'] && $b['ide']) return 1;
-          */
-          return 0;
-        }
-
-        function criterioDesempateUsado($a, $b, $criteriosDesempate)
-        {
-          foreach ($criteriosDesempate as $index => $crit) {
-            $notaA = $a['criterios'][$crit] ?? 0;
-            $notaB = $b['criterios'][$crit] ?? 0;
-            if ($notaA != $notaB) {
-              return ['indice' => $index + 1, 'criterio' => "Critério #" . ($index + 1)];
-            }
-          }
-          /* -- DESATIVADOS A PEDIDO --
-          if ($a['focalizada'] !== $b['focalizada']) { return ['indice' => 'Focalizada', 'criterio' => 'Escola focalizada']; }
-          if ($a['ide'] !== $b['ide']) { return ['indice' => 'IDE', 'criterio' => 'Escola com IDE']; }
-          */
-          if ($a['total_trabalhos'] != $b['total_trabalhos']) {
-            return ['indice' => 'Total Trabalhos', 'criterio' => 'Maior percentual de trabalhos'];
-          }
-          if ($a['IDEB'] != $b['IDEB']) {
-            return ['indice' => 'IDEB', 'criterio' => 'Menor IDEB'];
-          }
-          return null;
-        }
-        usort($dados, function ($a, $b) use ($criteriosDesempate) {
-          return comparaTrabalhos($a, $b, $criteriosDesempate);
-        });
-
-        for ($i = 0; $i < count($dados) - 1; $i++) {
-          $atual = $dados[$i];
-          $proximo = $dados[$i + 1];
-
-          if (abs($atual['nota_final'] - $proximo['nota_final']) < 0.0001) {
-            $criterioUsado = criterioDesempateUsado($atual, $proximo, $criteriosDesempate);
-            if ($criterioUsado !== null) {
-              $dados[$i]['criterio_desempate'] = $criterioUsado;
-              $dados[$i + 1]['criterio_desempate'] = null;
-            }
-          }
+        // O dashboard usa a mesma função central de ranking dos demais módulos.
+        // A função aplica somente as regras ativas configuradas em Criterios_desempate;
+        // não há fallback fixo para colunas IDEB ou total_trabalhos.
+        $erroRanking = false;
+        try {
+          $dados = obterClassificacaoTrabalhos(
+            $pdo,
+            $categoriaFiltro,
+            $areaFiltro,
+            true // mantém os trabalhos sem notas no ranking preliminar
+          );
+        } catch (Throwable $e) {
+          error_log('Erro ao calcular ranking do dashboard: ' . $e->getMessage());
+          $dados = [];
+          $erroRanking = true;
         }
         ?>
 
@@ -1019,41 +816,64 @@ $campos_trabalho = $stmtCamposTrabalho->fetchAll(PDO::FETCH_ASSOC);
               <?php if (count($dados) > 0) {
                 $posicao = 1;
                 foreach ($dados as $trab) {
+                  $posicaoLinha = (int) ($trab['posicao'] ?? $posicao);
+                  $juradosDetalhes = $trab['jurados_detalhes'] ?? [];
                   echo '<tr>';
-                  echo '<td class="text-center"><span class="rank-badge">' . $posicao . 'º</span></td>';
+                  echo '<td class="text-center"><span class="rank-badge">' . $posicaoLinha . 'º</span></td>';
                   echo '<td class="text-start td-item-title">' . htmlspecialchars($trab['titulo']) . '</td>';
                   echo '<td class="text-start">' . $trab['Modalidade'] . ' ' . htmlspecialchars($trab['escola']) . '</td>';
                   echo '<td><span class="category-pill">' . htmlspecialchars($trab['categoria']) . '</span></td>';
                   echo '<td>' . htmlspecialchars($trab['area'] ?? 'Sem área') . '</td>';
                   echo '<td class="fw-semibold">' . (
-                    isset($trab['jurados'][1]['media_ponderada']) && $trab['jurados'][1]['media_ponderada'] !== null
-                    ? number_format($trab['jurados'][1]['media_ponderada'], 2, ',', '')
+                    isset($juradosDetalhes[1]['media_ponderada']) && $juradosDetalhes[1]['media_ponderada'] !== null
+                    ? number_format($juradosDetalhes[1]['media_ponderada'], 2, ',', '')
                     : '-'
                   ) . '</td>';
 
                   echo '<td class="fw-semibold">' . (
-                    isset($trab['jurados'][2]['media_ponderada']) && $trab['jurados'][2]['media_ponderada'] !== null
-                    ? number_format($trab['jurados'][2]['media_ponderada'], 2, ',', '')
+                    isset($juradosDetalhes[2]['media_ponderada']) && $juradosDetalhes[2]['media_ponderada'] !== null
+                    ? number_format($juradosDetalhes[2]['media_ponderada'], 2, ',', '')
                     : '-'
                   ) . '</td>';
 
                   echo '<td class="fw-bold text-success">' . (
-                    $trab['nota_final'] !== null
-                    ? number_format($trab['nota_final'], 2, ',', '')
+                    $trab['media_final'] !== null
+                    ? number_format($trab['media_final'], 2, ',', '')
                     : '-'
                   ) . '</td>';
-                  if (isset($trab['criterio_desempate']) && $trab['criterio_desempate'] !== null) {
+                  if (
+                    isset($trab['criterio_desempate'])
+                    && $trab['criterio_desempate'] !== null
+                  ) {
                     $crit = $trab['criterio_desempate'];
-                    echo '<td><span class="badge bg-light text-dark border">' . htmlspecialchars($crit['criterio']) . '</span></td>';
+
+                    echo '<td class="text-center"
+            style="width: 80px; max-width: 80px; padding: 4px;
+            overflow-wrap: anywhere;">
+            <span class="badge bg-light text-dark border px-2 py-2"
+                style="white-space: normal;">'
+                      . htmlspecialchars(
+                        (string) ($crit['criterio'] ?? '-'),
+                        ENT_QUOTES,
+                        'UTF-8'
+                      )
+                      . '</span>
+        </td>';
                   } else {
-                    echo '<td class="text-muted">-</td>';
+                    echo '<td class="text-center text-muted"
+        style="width: 80px; max-width: 80px; padding: 4px;">-</td>';
                   }
+
                   echo '</tr>';
-                  $posicao++;
+                  $posicao = $posicaoLinha + 1;
                 }
               } else {
-                echo '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhum trabalho encontrado para os filtros selecionados.</td></tr>';
-              } ?>
+                $mensagemRanking = $erroRanking
+                  ? 'Não foi possível calcular o ranking. Verifique a configuração dos critérios e o log do PHP.'
+                  : 'Nenhum trabalho encontrado para os filtros selecionados.';
+                echo '<tr><td colspan="9" class="text-center py-4 text-muted">' . htmlspecialchars($mensagemRanking, ENT_QUOTES, 'UTF-8') . '</td></tr>';
+              }
+              ?>
             </tbody>
           </table>
         </div>

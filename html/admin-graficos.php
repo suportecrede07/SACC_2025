@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 
 session_start();
 require_once '../php/Connect.php';
+require_once '../php/CalculoRanking.php';
 if (!isset($_SESSION['id_admin']) || !isset($_SESSION['usuario'])) {
   header('Location: ../html/login_adm.php');
   exit();
@@ -221,231 +222,49 @@ foreach ($dados_categorias as $categoria) {
 $json_labels = json_encode($categorias, JSON_UNESCAPED_UNICODE);
 $json_dados = json_encode($contagem_categorias);
 
-// --- CONSTRUÇÃO DO O WHERE EXCLUSIVO DO RANKING ---
-$whereRanking = [];
-$paramsRanking = [];
-
-if (!empty($filtro_cat_ranking)) {
-    $whereRanking[] = "t.id_categoria = ?";
-    $paramsRanking[] = $filtro_cat_ranking;
-}
-if (!empty($filtro_area_ranking)) {
-    $whereRanking[] = "t.id_areas = ?";
-    $paramsRanking[] = $filtro_area_ranking;
-}
-
-$clausulaWhereRanking = $whereRanking ? "WHERE " . implode(" AND ", $whereRanking) : "";
-
-$sqlTrabalhosRanking = "
-    SELECT 
-        t.id_trabalhos,
-        t.id_escolas,
-        t.titulo,
-        e.nome AS escola_nome,
-        e.IDEB,
-        e.total_trabalhos,
-        c.nome_categoria,
-        a.nome_area,
-        ce.categoria_da_escola AS modalidade
-    FROM Trabalhos t
-    LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
-    LEFT JOIN categorias c ON t.id_categoria = c.id_categoria
-    LEFT JOIN areas a ON t.id_areas = a.id_area
-    LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
-    LEFT JOIN jurado_trabalho jt ON jt.id_trabalho = t.id_trabalhos
-    $clausulaWhereRanking
-    GROUP BY t.id_trabalhos
-";
-$stmtTrabRank = $pdo->prepare($sqlTrabalhosRanking);
-$stmtTrabRank->execute($paramsRanking);
-$trabalhos_ranking_bruto = $stmtTrabRank->fetchAll(PDO::FETCH_ASSOC);
-
-$idsTrabalhosRank = array_column($trabalhos_ranking_bruto, 'id_trabalhos');
-$avaliacoesRank = [];
-
-if (count($idsTrabalhosRank) > 0) {
-    $inRank = str_repeat('?,', count($idsTrabalhosRank) - 1) . '?';
-    $sqlNotasRank = "SELECT id_trabalho, id_jurado, criterio, nota FROM Avaliacoes WHERE id_trabalho IN ($inRank)";
-    $stmtNotasRank = $pdo->prepare($sqlNotasRank);
-    $stmtNotasRank->execute($idsTrabalhosRank);
-    $avaliacoesRank = $stmtNotasRank->fetchAll(PDO::FETCH_ASSOC);
-}
-
-$notasPorTrabalhoRank = [];
-foreach ($avaliacoesRank as $av) {
-    $notasPorTrabalhoRank[$av['id_trabalho']][$av['id_jurado']][$av['criterio']] = (float)$av['nota'];
-}
-
-// Busca regras de desempate cadastradas no banco de dados (Criterios_desempate)
-$stmtDesempateRegras = $pdo->query("
-    SELECT cd.*, ca.nome AS nome_criterio_avaliacao, cf.nome_campo AS nome_campo_dinamico
-    FROM Criterios_desempate cd
-    LEFT JOIN Criterios_avaliacao ca ON cd.id_criterio_avaliacao = ca.id
-    LEFT JOIN Campos_formulario cf ON cd.id_campo_formulario = cf.id
-    WHERE cd.ativo = 1
-    ORDER BY cd.ordem_prioridade ASC
-");
-$regrasDesempateBanco = $stmtDesempateRegras->fetchAll(PDO::FETCH_ASSOC);
-
-// Carrega valores de campos dinâmicos para desempate se necessário
-$valoresCamposEscolas = [];
-if (!empty($trabalhos_ranking_bruto)) {
-    $idsEscolasRank = array_unique(array_filter(array_column($trabalhos_ranking_bruto, 'id_escolas')));
-    if (!empty($idsEscolasRank)) {
-        $inEscolas = implode(',', array_fill(0, count($idsEscolasRank), '?'));
-        $stmtVal = $pdo->prepare("SELECT id_campo, id_registro, valor FROM Valores_campos WHERE id_registro IN ($inEscolas)");
-        $stmtVal->execute(array_values($idsEscolasRank));
-        while ($vRow = $stmtVal->fetch(PDO::FETCH_ASSOC)) {
-            $valoresCamposEscolas[$vRow['id_registro']][$vRow['id_campo']] = $vRow['valor'];
-        }
-    }
-}
-
-$pesos = $pesos_criterios;
-if (empty($pesos)) {
-    $pesos = [1 => 1.0];
-}
-
-$calculaMediaPonderada = function ($notas, $pesos) {
-    $somaNotas = 0;
-    $somaPesos = 0;
-    foreach ($pesos as $crit => $peso) {
-        $nota = $notas[$crit] ?? null;
-        if ($nota !== null) {
-            $somaNotas += $nota * $peso;
-            $somaPesos += $peso;
-        }
-    }
-    return $somaPesos > 0 ? ($somaNotas / $somaPesos) * 10 : null;
-};
-
+// --- CÁLCULO OFICIAL DO RANKING DE TRABALHOS (PADRONIZADO COM O PDF) ---
 $dados_ranking_trabalhos = [];
-foreach ($trabalhos_ranking_bruto as $row) {
-    $id_trabalho = $row['id_trabalhos'];
-    $id_escola = $row['id_escolas'] ?? null;
-    $notasPorJurado = $notasPorTrabalhoRank[$id_trabalho] ?? [];
-    $jurados = array_keys($notasPorJurado);
-    sort($jurados);
+$erroRanking = null;
 
-    $mediasJurados = [];
-    foreach ($jurados as $jId) {
-        $mJur = $calculaMediaPonderada($notasPorJurado[$jId], $pesos);
-        if ($mJur !== null) {
-            $mediasJurados[] = $mJur;
-        }
-    }
-
-    $notaFinal = count($mediasJurados) > 0 ? (array_sum($mediasJurados) / count($mediasJurados)) : null;
-
-    $criteriosMedios = [];
-    foreach ($pesos as $crit => $_) {
-        $notasCrit = [];
-        foreach ($jurados as $jId) {
-            if (isset($notasPorJurado[$jId][$crit])) {
-                $notasCrit[] = $notasPorJurado[$jId][$crit];
-            }
-        }
-        $criteriosMedios[$crit] = count($notasCrit) > 0 ? (array_sum($notasCrit) / count($notasCrit)) : null;
-    }
-
-    $dados_ranking_trabalhos[] = [
-        'id_trabalhos' => $id_trabalho,
-        'id_escolas' => $id_escola,
-        'titulo' => $row['titulo'],
-        'escola_nome' => $row['escola_nome'],
-        'nome_categoria' => $row['nome_categoria'],
-        'nome_area' => $row['nome_area'],
-        'modalidade' => $row['modalidade'],
-        'media_trabalho' => $notaFinal,
-        'criterios' => $criteriosMedios,
-        'criterio_desempate' => null,
-        'valores_campos' => $valoresCamposEscolas[$id_escola] ?? []
-    ];
+try {
+    $idCatRank = !empty($filtro_cat_ranking) ? (int)$filtro_cat_ranking : null;
+    $idAreaRank = !empty($filtro_area_ranking) ? (int)$filtro_area_ranking : null;
+    $dados_ranking_trabalhos = obterClassificacaoTrabalhos($pdo, $idCatRank, $idAreaRank);
+} catch (Throwable $e) {
+    $erroRanking = $e->getMessage();
+    $dados_ranking_trabalhos = [];
 }
 
-function comparaTrabalhosDinamicos($a, $b, $regrasDesempate) {
-    $medA = $a['media_trabalho'] ?? -1;
-    $medB = $b['media_trabalho'] ?? -1;
-    if ($medA > $medB) return -1;
-    if ($medA < $medB) return 1;
-
-    foreach ($regrasDesempate as $regra) {
-        $valA = 0;
-        $valB = 0;
-        if (!empty($regra['id_criterio_avaliacao'])) {
-            $idCrit = (int)$regra['id_criterio_avaliacao'];
-            $valA = (float)($a['criterios'][$idCrit] ?? 0);
-            $valB = (float)($b['criterios'][$idCrit] ?? 0);
-        } elseif (!empty($regra['id_campo_formulario'])) {
-            $idCampo = (int)$regra['id_campo_formulario'];
-            $valA = (float)($a['valores_campos'][$idCampo] ?? 0);
-            $valB = (float)($b['valores_campos'][$idCampo] ?? 0);
-        }
-
-        if ($valA != $valB) {
-            $direcao = strtoupper($regra['direcao'] ?? 'DESC');
-            if ($direcao === 'ASC') {
-                return ($valA < $valB) ? -1 : 1;
-            } else {
-                return ($valA > $valB) ? -1 : 1;
-            }
-        }
-    }
-
-    return 0;
-}
-
-function criterioDesempateUsadoDinamico($a, $b, $regrasDesempate) {
-    foreach ($regrasDesempate as $regra) {
-        $valA = 0;
-        $valB = 0;
-        $nomeRegra = $regra['nome_regra'] ?? 'Critério de Desempate';
-
-        if (!empty($regra['id_criterio_avaliacao'])) {
-            $idCrit = (int)$regra['id_criterio_avaliacao'];
-            $valA = (float)($a['criterios'][$idCrit] ?? 0);
-            $valB = (float)($b['criterios'][$idCrit] ?? 0);
-            if (!empty($regra['nome_criterio_avaliacao'])) {
-                $nomeRegra = $regra['nome_criterio_avaliacao'];
-            }
-        } elseif (!empty($regra['id_campo_formulario'])) {
-            $idCampo = (int)$regra['id_campo_formulario'];
-            $valA = (float)($a['valores_campos'][$idCampo] ?? 0);
-            $valB = (float)($b['valores_campos'][$idCampo] ?? 0);
-            if (!empty($regra['nome_campo_dinamico'])) {
-                $nomeRegra = $regra['nome_campo_dinamico'];
-            }
-        }
-
-        if ($valA != $valB) {
-            return ['criterio' => $nomeRegra];
-        }
-    }
-    return null;
-}
-
-usort($dados_ranking_trabalhos, function ($a, $b) use ($regrasDesempateBanco) {
-    return comparaTrabalhosDinamicos($a, $b, $regrasDesempateBanco);
-});
-
-for ($i = 0; $i < count($dados_ranking_trabalhos) - 1; $i++) {
-    $atual = $dados_ranking_trabalhos[$i];
-    $proximo = $dados_ranking_trabalhos[$i + 1];
-
-    if ($atual['media_trabalho'] !== null && $proximo['media_trabalho'] !== null && abs($atual['media_trabalho'] - $proximo['media_trabalho']) < 0.0001) {
-        $criterioUsado = criterioDesempateUsadoDinamico($atual, $proximo, $regrasDesempateBanco);
-        if ($criterioUsado !== null) {
-            $dados_ranking_trabalhos[$i]['criterio_desempate'] = $criterioUsado;
-            $dados_ranking_trabalhos[$i + 1]['criterio_desempate'] = null;
-        }
+// Busca detalhes complementares de exibição para cada trabalho do ranking (Categoria, Área, Modalidade)
+$detalhes_trabalhos_ranking = [];
+if (!empty($dados_ranking_trabalhos)) {
+    $idsTrabsRank = array_column($dados_ranking_trabalhos, 'id_trabalho');
+    $placeholdersRank = implode(',', array_fill(0, count($idsTrabsRank), '?'));
+    $stmtDetRank = $pdo->prepare("
+        SELECT 
+            t.id_trabalhos,
+            c.nome_categoria,
+            a.nome_area,
+            ce.categoria_da_escola AS modalidade
+        FROM Trabalhos t
+        LEFT JOIN categorias c ON t.id_categoria = c.id_categoria
+        LEFT JOIN areas a ON t.id_areas = a.id_area
+        LEFT JOIN Escolas e ON t.id_escolas = e.id_escolas
+        LEFT JOIN Categoria_escolas ce ON e.id_categoria_escola = ce.id
+        WHERE t.id_trabalhos IN ($placeholdersRank)
+    ");
+    $stmtDetRank->execute($idsTrabsRank);
+    while ($rowDet = $stmtDetRank->fetch(PDO::FETCH_ASSOC)) {
+        $detalhes_trabalhos_ranking[$rowDet['id_trabalhos']] = $rowDet;
     }
 }
 
+// Preparação dos dados para o gráfico horizontal do Ranking (Top 10)
 $ranking_trab_titulos = [];
 $ranking_trab_notas = [];
 foreach (array_slice($dados_ranking_trabalhos, 0, 10) as $rt) {
-    $ranking_trab_titulos[] = $rt['titulo'] ?? 'Trabalho #' . $rt['id_trabalhos'];
-    $ranking_trab_notas[] = $rt['media_trabalho'] !== null ? round($rt['media_trabalho'], 2) : 0;
+    $ranking_trab_titulos[] = $rt['titulo'] ?? 'Trabalho #' . $rt['id_trabalho'];
+    $ranking_trab_notas[] = isset($rt['media_final']) && $rt['media_final'] !== null ? round((float)$rt['media_final'], 2) : 0;
 }
 $json_ranking_trab_titulos = json_encode($ranking_trab_titulos, JSON_UNESCAPED_UNICODE);
 $json_ranking_trab_notas = json_encode($ranking_trab_notas);
@@ -782,7 +601,7 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
             <span>TÍTULO DO TRABALHO / ESCOLA</span>
             <div class="d-flex gap-5">
               <span>MÉDIA FINAL</span>
-              <span style="width: 120px; text-align: right;">DESEMPATE</span>
+              <span style="width: 190px; text-align: right; margin-right: 145px;">DESEMPATE</span>
             </div>
           </div>
 
@@ -791,27 +610,34 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
               $top_trabalhos_lista = array_slice($dados_ranking_trabalhos, 0, 10);
               $idxTrab = 1;
               foreach ($top_trabalhos_lista as $trab): 
-                $valNota = $trab['media_trabalho'];
+                $valNota = isset($trab['media_final']) && $trab['media_final'] !== null ? (float)$trab['media_final'] : null;
                 $percBarraTrab = $valNota !== null ? min(100, max(5, ($valNota / 10) * 100)) : 0;
                 
-                if ($valNota >= 8.0) {
+                if ($valNota !== null && $valNota >= 8.0) {
                   $barColor = 'var(--verde-saeb)';
-                } elseif ($valNota >= 7.0) {
+                } elseif ($valNota !== null && $valNota >= 7.0) {
                   $barColor = '#f59e0b';
                 } else {
                   $barColor = '#ef4444';
                 }
+
+                $idTrabAtual = (int)($trab['id_trabalho'] ?? 0);
+                $det = $detalhes_trabalhos_ranking[$idTrabAtual] ?? [];
+                $nomeEscola = $trab['escola'] ?? 'Não informada';
+                $modEscola = !empty($det['modalidade']) ? $det['modalidade'] . ' ' : '';
+                $catTexto = !empty($det['nome_categoria']) ? $det['nome_categoria'] : '-';
+                $areaTexto = !empty($det['nome_area']) ? $det['nome_area'] : '-';
             ?>
               <div class="school-row-card w-100">
                 <div class="school-info-col">
-                  <span class="school-index"><?= sprintf('%02d', $idxTrab++) ?></span>
+                  <span class="school-index"><?= sprintf('%02d', $trab['posicao'] ?? $idxTrab++) ?></span>
                   <div class="d-flex flex-column text-truncate">
                     <span class="school-name text-truncate" title="<?= htmlspecialchars($trab['titulo']) ?>">
                       <?= htmlspecialchars($trab['titulo']) ?>
                     </span>
                     <small class="text-muted" style="font-size: 0.75rem;">
-                      <?= htmlspecialchars(($trab['modalidade'] ? $trab['modalidade'] . ' ' : '') . $trab['escola_nome']) ?> &bull; 
-                      <span class="text-secondary"><?= htmlspecialchars($trab['nome_categoria']) ?> / <?= htmlspecialchars($trab['nome_area']) ?></span>
+                      <?= htmlspecialchars($modEscola . $nomeEscola) ?> &bull; 
+                      <span class="text-secondary"><?= htmlspecialchars($catTexto) ?> / <?= htmlspecialchars($areaTexto) ?></span>
                     </small>
                   </div>
                 </div>
@@ -820,9 +646,9 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
                   <span class="school-score-val" style="color: <?= $barColor ?>;">
                     <?= $valNota !== null ? number_format($valNota, 2, ',', '') : '-' ?>
                   </span>
-                  <div style="width: 120px; text-align: center;">
-                    <?php if (isset($trab['criterio_desempate']) && $trab['criterio_desempate'] !== null): ?>
-                      <span class="badge bg-warning text-dark" style="font-size: 0.7rem;" title="Desempate aplicado">
+                  <div style="width: 360px; text-align: center; flex-shrink: 0;">
+                    <?php if (!empty($trab['criterio_desempate']['criterio'])): ?>
+                      <span class="badge bg-warning text-dark" style="font-size: 0.7rem;" title="Desempate aplicado: <?= htmlspecialchars($trab['criterio_desempate']['criterio']) ?>">
                         <?= htmlspecialchars($trab['criterio_desempate']['criterio']) ?>
                       </span>
                     <?php else: ?>
@@ -834,7 +660,9 @@ $json_ranking_trab_notas = json_encode($ranking_trab_notas);
             <?php endforeach; ?>
 
             <?php if (empty($dados_ranking_trabalhos)): ?>
-              <div class="text-center py-4 text-muted">Nenhum trabalho encontrado para os filtros selecionados.</div>
+              <div class="text-center py-4 text-muted">
+                <?= !empty($erroRanking) ? htmlspecialchars($erroRanking) : 'Nenhum trabalho encontrado para os filtros selecionados.' ?>
+              </div>
             <?php endif; ?>
           </div>
         </div>

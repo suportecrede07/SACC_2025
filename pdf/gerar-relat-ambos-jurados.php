@@ -4,7 +4,7 @@ require_once '../dompdf/vendor/autoload.php';
 use Dompdf\Dompdf;
 
 ob_start();
-include(__DIR__ . '/../html/relat-ambos-jurados.php');
+include(__DIR__ . '/../html/relatorios-ambos-jurados.php');
 $html = ob_get_clean();
 
 $dompdf = new Dompdf();

@@ -49,17 +49,15 @@ function obterPdfComoString($pdo, $id_trabalho, $id_jurado) {
     $stmt2->execute(['id_trabalho' => $id_trabalho, 'id_jurado' => $id_jurado]);
     $avaliacoes = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-    $criterios = [
-        1 => "Criatividade e Inovação",
-        2 => "Relevância da pesquisa",
-        3 => "Conhecimento científico fundamentado e contextualização do problem abordado",
-        4 => "Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática: o conhecimento a serviço da vida coletiva",
-        5 => "Materiais e métodos conectados com os objetivos, resultados e conclusões",
-        6 => "Clareza e objetividade na linguagem apresentada",
-        7 => "Banner",
-        8 => "Caderno de campo",
-        9 => "Processo participativo e solidário"
-    ];
+    // Busca critérios avaliativos ativos dinamicamente do banco de dados
+    $stmtCrit = $pdo->query("SELECT id, nome FROM Criterios_avaliacao WHERE ativo = 1 ORDER BY ordem ASC, id ASC");
+    $criterios = [];
+    while ($critRow = $stmtCrit->fetch(PDO::FETCH_ASSOC)) {
+        $criterios[(int)$critRow['id']] = $critRow['nome'];
+    }
+    if (empty($criterios)) {
+        $criterios = [1 => "Critério 1"];
+    }
 
     $avaliacoesIndexadas = [];
     foreach ($avaliacoes as $av) {

@@ -60,22 +60,61 @@ if (isset($categoriasAreas[1])) {
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f4f6f9;
-            color: #212529;
+            background-color: #f8fafc;
+            color: #1e293b;
         }
         .card-custom {
             background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
             border: 1px solid #e2e8f0;
-            padding: 28px;
+            padding: 32px;
             max-width: 680px;
             margin: 40px auto;
         }
         .form-label {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            color: #000000 !important;
+            margin-bottom: 6px;
+        }
+        .form-control, .form-select, select.form-control {
+            height: 44px;
+            border-radius: 8px;
+            border: 1.5px solid #94a3b8;
+            background-color: #ffffff;
             color: #1e293b;
+            font-size: 0.9rem;
+            padding: 10px 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .form-control:focus, .form-select:focus, select.form-control:focus {
+            border-color: #3b7e4a;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 126, 74, 0.18);
+            background-color: #ffffff;
+        }
+        .btn-success {
+            background-color: #3b7e4a !important;
+            border-color: #3b7e4a !important;
+            border-radius: 8px;
+            padding: 9px 20px;
+        }
+        .btn-success:hover {
+            background-color: #2c633a !important;
+            border-color: #2c633a !important;
+        }
+        .btn-secondary {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+            color: #ffffff !important;
+            border-radius: 8px;
+            padding: 9px 20px;
+        }
+        .btn-secondary:hover {
+            background-color: #5c636a !important;
+            border-color: #565e64 !important;
         }
     </style>
 </head>

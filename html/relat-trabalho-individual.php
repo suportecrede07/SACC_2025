@@ -15,9 +15,9 @@ if (
 $id_trabalho = (int) $_GET['id_trabalho'];
 $id_jurado = (int) $_GET['id_jurado'];
 
-$sql = "SELECT 
-            t.titulo, 
-            e.nome AS escola, 
+$sql = "SELECT
+            t.titulo,
+            e.nome AS escola,
             c.nome_categoria AS categoria,
             a.nome_area AS area
         FROM Trabalhos t
@@ -30,54 +30,67 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute(['id_trabalho' => $id_trabalho]);
 $trabalho = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$trabalho) die("Trabalho não encontrado.");
+if (!$trabalho) {
+    die("Trabalho não encontrado.");
+}
 
 $sql_jurado = "SELECT nome FROM Jurados WHERE id_jurados = :id_jurado";
 $stmt_j = $pdo->prepare($sql_jurado);
 $stmt_j->execute(['id_jurado' => $id_jurado]);
 $jurado = $stmt_j->fetch(PDO::FETCH_ASSOC);
 
-if (!$jurado) die("Jurado não encontrado.");
+if (!$jurado) {
+    die("Jurado não encontrado.");
+}
 
-$sql_avaliacoes = "SELECT criterio, nota, comentario FROM Avaliacoes 
-                   WHERE id_trabalho = :id_trabalho AND id_jurado = :id_jurado 
-                   ORDER BY criterio";
+// Carrega somente os critérios ativos, usando a coluna ordem para definir a sequência.
+$sql_criterios = "SELECT id, nome, peso, ordem
+                  FROM Criterios_avaliacao
+                  WHERE ativo = 1
+                  ORDER BY ordem ASC, id ASC";
+$stmt_criterios = $pdo->query($sql_criterios);
+$criterios = $stmt_criterios->fetchAll(PDO::FETCH_ASSOC);
+
+// Busca somente avaliações vinculadas a critérios ativos.
+$sql_avaliacoes = "SELECT A.criterio, A.nota, A.comentario
+                   FROM Avaliacoes A
+                   INNER JOIN Criterios_avaliacao CA
+                       ON CA.id = A.criterio AND CA.ativo = 1
+                   WHERE A.id_trabalho = :id_trabalho
+                     AND A.id_jurado = :id_jurado
+                   ORDER BY CA.ordem ASC, CA.id ASC";
 $stmt2 = $pdo->prepare($sql_avaliacoes);
-$stmt2->execute(['id_trabalho' => $id_trabalho, 'id_jurado' => $id_jurado]);
+$stmt2->execute([
+    'id_trabalho' => $id_trabalho,
+    'id_jurado' => $id_jurado,
+]);
 $avaliacoes = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-$criterios = [
-    1 => "Criatividade e Inovação",
-    2 => "Relevância da pesquisa",
-    3 => "Conhecimento científico fundamentado e contextualização do problema abordado",
-    4 => "Impacto para a construção de uma sociedade que promova Ciência, Cidadania e Convivência Democrática: o conhecimento a serviço da vida coletiva",
-    5 => "Materiais e métodos conectados com os objetivos, resultados e conclusões",
-    6 => "Clareza e objetividade na linguagem apresentada",
-    7 => "Banner",
-    8 => "Caderno de campo",
-    9 => "Processo participativo e solidário"
-];
-
+// Indexa as avaliações pelo ID do critério, usado apenas para relacionar a nota correta.
 $avaliacoesIndexadas = [];
 foreach ($avaliacoes as $av) {
-    $avaliacoesIndexadas[$av['criterio']] = $av;
+    $avaliacoesIndexadas[(int) $av['criterio']] = $av;
 }
 
 function toBase64Image($path)
 {
-    if (!file_exists($path)) return '';
+    if (!file_exists($path)) {
+        return '';
+    }
+
     $type = pathinfo($path, PATHINFO_EXTENSION);
     $data = file_get_contents($path);
     if ($data === false) {
         return '';
     }
+
     $base64 = base64_encode($data);
     return "data:image/$type;base64,$base64";
 }
 
-$imgCearaCientifico = toBase64Image(__DIR__.'/../assets/img/crede-ceara-cientifico-estado.png');
-$imgCrede7 = toBase64Image(__DIR__.'/../assets/img/crede7.png');
-$imgCeara = toBase64Image(__DIR__.'/../assets/img/ceara.png');
+$imgCearaCientifico = toBase64Image(__DIR__ . '/../assets/img/crede-ceara-cientifico-estado.png');
+$imgCrede7 = toBase64Image(__DIR__ . '/../assets/img/crede7.png');
+$imgCeara = toBase64Image(__DIR__ . '/../assets/img/ceara.png');
 
 ob_start();
 ?>
@@ -118,14 +131,15 @@ ob_start();
         }
 
         table tbody td {
-        vertical-align: top;
-        word-wrap: break-word; 
-        word-break: break-word;     
-        white-space: pre-wrap;
-        max-width: 400px;   
-        padding: 8px;
-        border: 1px solid #ddd;
+            vertical-align: top;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: pre-wrap;
+            max-width: 400px;
+            padding: 8px;
+            border: 1px solid #ddd;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -153,10 +167,10 @@ ob_start();
 
     <div class="text-center" style="background-color:#198754; color:#fff; padding:6px; margin-bottom: 25px;">
         <div class="header-title">RELATÓRIO INDIVIDUAL DE AVALIAÇÃO</div>
-        <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome']) ?></div>
-        <div class="sub-title">TÍTULO: <?= htmlspecialchars($trabalho['titulo']) ?></div>
-        <div class="sub-title">ESCOLA: <?= htmlspecialchars($trabalho['escola']) ?></div>
-        <div class="sub-title">CATEGORIA: <?= htmlspecialchars($trabalho['categoria']) ?> | ÁREA: <?= htmlspecialchars($trabalho['area']) ?></div>
+        <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome'], ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="sub-title">TÍTULO: <?= htmlspecialchars($trabalho['titulo'], ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="sub-title">ESCOLA: <?= htmlspecialchars($trabalho['escola'] ?? '', ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="sub-title">CATEGORIA: <?= htmlspecialchars($trabalho['categoria'] ?? '', ENT_QUOTES, 'UTF-8') ?> | ÁREA: <?= htmlspecialchars($trabalho['area'] ?? '', ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 
     <table>
@@ -168,18 +182,16 @@ ob_start();
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($criterios as $num => $nome): ?>
+            <?php foreach ($criterios as $criterio): ?>
+                <?php $idCriterio = (int) $criterio['id']; ?>
                 <tr>
-                    <td style="font-size: 10px;"><b><?= htmlspecialchars($nome) ?></b></td>
-                    <td><?= isset($avaliacoesIndexadas[$num]) ? number_format($avaliacoesIndexadas[$num]['nota'], 2, ',', '.') : '' ?></td>
-                    <td style="font-size: 8px;"><?= isset($avaliacoesIndexadas[$num]) ? nl2br(htmlspecialchars($avaliacoesIndexadas[$num]['comentario'])) : '' ?></td>
+                    <td style="font-size: 10px;"><b><?= htmlspecialchars($criterio['nome'], ENT_QUOTES, 'UTF-8') ?></b></td>
+                    <td><?= isset($avaliacoesIndexadas[$idCriterio]) ? number_format((float) $avaliacoesIndexadas[$idCriterio]['nota'], 2, ',', '.') : '' ?></td>
+                    <td style="font-size: 8px;"><?= isset($avaliacoesIndexadas[$idCriterio]) ? nl2br(htmlspecialchars((string) ($avaliacoesIndexadas[$idCriterio]['comentario'] ?? ''), ENT_QUOTES, 'UTF-8')) : '' ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
-
-
-
 </body>
 
 </html>
@@ -195,7 +207,7 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 $canvas = $dompdf->getCanvas();
-$canvas->page_text(720, 570, "Página {PAGE_NUM} de {PAGE_COUNT}", null, 10, array(0,0,0));
+$canvas->page_text(720, 570, "Página {PAGE_NUM} de {PAGE_COUNT}", null, 10, [0, 0, 0]);
 
 $dompdf->stream("avaliacao_trabalho_{$id_trabalho}_jurado_{$id_jurado}.pdf", ["Attachment" => false]);
 exit;

@@ -5,99 +5,144 @@ error_reporting(E_ALL);
 
 require_once '../dompdf/vendor/autoload.php';
 require_once '../php/Connect.php';
+require_once '../php/CalculoRanking.php';
 
 use Dompdf\Dompdf;
 
 $id_jurado = isset($_GET['id_jurado']) ? intval($_GET['id_jurado']) : 0;
 if ($id_jurado <= 0) die("ID do jurado inválido.");
 
+// O cabeçalho exibe apenas uma área, como no relatório original.
+// Quando houver mais de uma associação, prioriza uma associação com área
+// preenchida e escolhe uma única área de forma determinística.
 $juradoQuery = $pdo->prepare(
     "SELECT j.nome, ar.nome_area
      FROM Jurados j
      LEFT JOIN jurados_categorias_areas jcr
         ON jcr.id_jurados = j.id_jurados
-     LEFT JOIN areas ar
+     LEFT JOIN Areas ar
         ON ar.id_area = jcr.id_area
-     WHERE j.id_jurados = ?"
+     WHERE j.id_jurados = ?
+     ORDER BY (ar.nome_area IS NULL) ASC, ar.nome_area ASC
+     LIMIT 1"
 );
 $juradoQuery->execute([$id_jurado]);
 $jurado = $juradoQuery->fetch(PDO::FETCH_ASSOC);
-if (!$jurado) die("Jurado não encontrado.");
+if (!$jurado) {
+    http_response_code(404);
+    exit('Jurado não encontrado.');
+}
 
-$avaliacoesQuery = $pdo->prepare("
-    SELECT 
+// Carrega somente critérios ativos e na ordem definida nas Configurações.
+$criterios = obterCriteriosAvaliacaoAtivos($pdo);
+if (!$criterios) {
+    http_response_code(500);
+    exit('Não há critérios de avaliação ativos para gerar este relatório.');
+}
+if (!array_filter($criterios, static fn(array $criterio): bool => (float) $criterio['peso'] > 0)) {
+    http_response_code(500);
+    exit('Não há critérios ativos com peso maior que zero para calcular as notas.');
+}
+
+$criteriosPorId = [];
+foreach ($criterios as &$criterio) {
+    $criterio['id'] = (int) $criterio['id'];
+    $criterio['peso'] = (float) $criterio['peso'];
+    $criteriosPorId[$criterio['id']] = $criterio;
+}
+unset($criterio);
+
+// Busca apenas avaliações de critérios ativos. O ID é usado para relacionar
+// cada nota ao critério certo; a ordem de apresentação vem de Criterios_avaliacao.ordem.
+$avaliacoesQuery = $pdo->prepare(
+    "SELECT
         T.id_trabalhos,
         T.titulo,
         E.nome AS escola,
         A.criterio,
         A.nota,
         ce.categoria_da_escola
-    FROM Avaliacoes A
-    JOIN Trabalhos T ON A.id_trabalho = T.id_trabalhos
-    JOIN Escolas E ON T.id_escolas = E.id_escolas
-    LEFT JOIN categoria_escolas ce ON e.id_categoria_escola = ce.id
-    WHERE A.id_jurado = ?
-    ORDER BY T.ordem
-");
+     FROM Avaliacoes A
+     JOIN Trabalhos T ON A.id_trabalho = T.id_trabalhos
+     JOIN Escolas E ON T.id_escolas = E.id_escolas
+     LEFT JOIN categoria_escolas ce ON E.id_categoria_escola = ce.id
+     JOIN Criterios_avaliacao CA
+        ON CA.id = A.criterio AND CA.ativo = 1
+     WHERE A.id_jurado = ?
+     ORDER BY T.ordem ASC, T.id_trabalhos ASC, CA.ordem ASC, CA.id ASC"
+);
 $avaliacoesQuery->execute([$id_jurado]);
 $avaliacoesRaw = $avaliacoesQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Pesos por critério
-$pesos = [
-  1 => 1,
-  2 => 1,
-  3 => 1.5,
-  4 => 1,
-  5 => 2,
-  6 => 1,
-  7 => 1,
-  8 => 1,
-  9 => 0.5
-];
-
-// Processar os dados por trabalho
+// Agrupa as notas por trabalho sem depender de IDs fixos de critérios.
 $trabalhos = [];
-
 foreach ($avaliacoesRaw as $row) {
-  $id = $row['id_trabalhos'];
-  $criterio = $row['criterio'];
-  $nota = $row['nota'];
-  $peso = isset($pesos[$criterio]) ? $pesos[$criterio] : 1;
+    $idTrabalho = (int) $row['id_trabalhos'];
+    $idCriterio = (int) $row['criterio'];
 
-  if (!isset($trabalhos[$id])) {
-    $trabalhos[$id] = [
-      'titulo' => $row['titulo'],
-      'escola' => $row['escola'],
-      'Modalidade' => $row['categoria_da_escola'],
-      'notas' => [],
-      'ponderada_soma' => 0,
-      'peso_total' => 0,
-      'nota_final' => 0
-    ];
-  }
+    // Proteção adicional para não considerar critérios inativos ou não carregados.
+    if (!isset($criteriosPorId[$idCriterio])) {
+        continue;
+    }
 
-  $trabalhos[$id]['notas'][$criterio] = $nota;
-  $trabalhos[$id]['ponderada_soma'] += $nota * $peso;
-  $trabalhos[$id]['peso_total'] += $peso;
+    if (!isset($trabalhos[$idTrabalho])) {
+        $trabalhos[$idTrabalho] = [
+            'titulo' => $row['titulo'],
+            'escola' => $row['escola'],
+            'Modalidade' => $row['categoria_da_escola'] ?? '',
+            'notas' => [],
+            'nota_final' => null
+        ];
+    }
+
+    // A nota fica indexada pelo ID do critério, e a média é calculada pela
+    // mesma função usada na classificação centralizada.
+    $trabalhos[$idTrabalho]['notas'][$idCriterio] = (float) $row['nota'];
 }
 
-foreach ($trabalhos as &$t) {
-  if ($t['peso_total'] > 0) {
-    $t['nota_final'] = ($t['ponderada_soma'] / $t['peso_total']) * 10;
-  } else {
-    $t['nota_final'] = 0;
-  }
+// Mantém a fórmula original: soma(nota * peso) / soma dos pesos
+// dos critérios ativos que possuem nota, multiplicada por 10.
+foreach ($trabalhos as &$trabalho) {
+    $somaNotas = 0.0;
+    $somaPesos = 0.0;
 
-  unset($t['ponderada_soma'], $t['peso_total']);
+    foreach ($criterios as $criterio) {
+        $idCriterio = (int) $criterio['id'];
+        $peso = (float) $criterio['peso'];
+
+        if ($peso <= 0 || !array_key_exists($idCriterio, $trabalho['notas'])) {
+            continue;
+        }
+
+        $somaNotas += (float) $trabalho['notas'][$idCriterio] * $peso;
+        $somaPesos += $peso;
+    }
+
+    $trabalho['nota_final'] = $somaPesos > 0
+        ? ($somaNotas / $somaPesos) * 10
+        : null;
 }
-unset($t);
+unset($trabalho);
 
-function imgBase64($path)
+function imgBase64(string $path): string
 {
-  if (!file_exists($path)) return '';
-  $type = pathinfo($path, PATHINFO_EXTENSION);
-  $data = file_get_contents($path);
-  return 'data:image/' . $type . ';base64,' . base64_encode($data);
+    if (!is_file($path)) {
+        return '';
+    }
+    $data = file_get_contents($path);
+    if ($data === false) {
+        return '';
+    }
+    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    $mimeTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+    ];
+    $mime = $mimeTypes[$extension] ?? 'application/octet-stream';
+    return 'data:' . $mime . ';base64,' . base64_encode($data);
 }
 
 $logo1 = imgBase64(__DIR__ . '/../assets/img/crede-ceara-cientifico-estado.png');
@@ -106,7 +151,6 @@ $logo3 = imgBase64(__DIR__ . '/../assets/img/ceara.png');
 
 ob_start();
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -183,60 +227,60 @@ ob_start();
 <body>
 
   <div class="text-center">
-    <img src="<?= $logo1 ?>" style="height:80px;">
+    <?php if ($logo1 !== ''): ?>
+      <img src="<?= htmlspecialchars($logo1, ENT_QUOTES, 'UTF-8') ?>" style="height:80px;" alt="Ceará Científico">
+    <?php endif; ?>
     <p><b>ETAPA REGIONAL - 2026</b></p>
   </div>
 
   <div class="text-center" style="background-color:#198754; color:#fff; padding:6px;">
     <div class="header-title">PLANILHA DE AVALIAÇÃO POR JURADO</div>
-    <div class="sub-title">JURADO: <?= htmlspecialchars($jurado['nome']) ?></div>
-    <?php if($jurado['nome_area']): ?>
-      <div class="sub-title">ÁREA: <?= htmlspecialchars($jurado['nome_area']) ?></div>
-      <?php else: ?>
-        <div class="sub-title">Categoria: <?= htmlspecialchars('Pesquisa Júnior') ?></div>
-      <?php endif; ?>
+    <div class="sub-title">JURADO: <?= htmlspecialchars((string) $jurado['nome'], ENT_QUOTES, 'UTF-8') ?></div>
+    <?php if (!empty($jurado['nome_area'])): ?>
+      <div class="sub-title">ÁREA: <?= htmlspecialchars((string) $jurado['nome_area'], ENT_QUOTES, 'UTF-8') ?></div>
+    <?php else: ?>
+      <div class="sub-title">Categoria: Pesquisa Júnior</div>
+    <?php endif; ?>
   </div>
 
   <div class="table-container">
     <table>
       <thead>
-      <tr>
-        <th>Escola</th>
-        <th>Título</th>
-        <th>Criatividade</th>
-        <th>Relevância</th>
-        <th>Conhecimento</th>
-        <th>Impacto</th>
-        <th>Metodologia</th>
-        <th>Clareza</th>
-        <th>Banner</th>
-        <th>Caderno</th>
-        <th>Participação</th>
-        <th>Nota Final</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($trabalhos as $t): ?>
         <tr>
-          <td><?= htmlspecialchars($t['Modalidade']) ." ". htmlspecialchars($t['escola']) ?></td>
-          <td><?= htmlspecialchars($t['titulo']) ?></td>
-          <?php
-          for ($i = 1; $i <= 9; $i++) {
-            echo "<td>" . (isset($t['notas'][$i]) ? number_format($t['notas'][$i], 2) : '-') . "</td>";
-          }
-          ?>
-          <td><strong><?= number_format($t['nota_final'], 2) ?></strong></td>
+          <th>Escola</th>
+          <th>Título</th>
+          <?php foreach ($criterios as $criterio): ?>
+            <th><?= htmlspecialchars($criterio['nome']) ?></th>
+          <?php endforeach; ?>
+          <th>Nota Final</th>
         </tr>
-      <?php endforeach; ?>
-    </tbody>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <?php if (empty($trabalhos)): ?>
+          <tr>
+            <td colspan="<?= count($criterios) + 3 ?>">Nenhuma avaliação encontrada para este jurado.</td>
+          </tr>
+        <?php else: ?>
+          <?php foreach ($trabalhos as $t): ?>
+            <tr>
+              <td><?= htmlspecialchars($t['Modalidade']) . " " . htmlspecialchars($t['escola']) ?></td>
+              <td><?= htmlspecialchars($t['titulo']) ?></td>
+              <?php foreach ($criterios as $criterio): ?>
+                <?php $idCriterio = (int) $criterio['id']; ?>
+                <td><?= array_key_exists($idCriterio, $t['notas']) ? number_format($t['notas'][$idCriterio], 2) : '-' ?></td>
+              <?php endforeach; ?>
+              <td><strong><?= $t['nota_final'] !== null ? number_format($t['nota_final'], 2) : '-' ?></strong></td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
   </div>
 
-    <div class="assinatura">
-      <hr style="width: 40%;">
-      <p>Avaliador(a)</p>
-    </div>
+  <div class="assinatura">
+    <hr style="width: 40%;">
+    <p>Avaliador(a)</p>
+  </div>
 </body>
 
 </html>
@@ -251,16 +295,21 @@ $dompdf->render();
 
 date_default_timezone_set('America/Fortaleza');
 
-$formatter = new IntlDateFormatter(
-  'pt_BR',
-  IntlDateFormatter::LONG,
-  IntlDateFormatter::NONE,
-  'America/Fortaleza',
-  IntlDateFormatter::GREGORIAN,
-  "d 'de' MMMM 'de' yyyy"
-);
-
-$dataServidor = $formatter->format(new DateTime());
+$dataServidor = null;
+if (class_exists(IntlDateFormatter::class)) {
+    $formatter = new IntlDateFormatter(
+        'pt_BR',
+        IntlDateFormatter::LONG,
+        IntlDateFormatter::NONE,
+        'America/Fortaleza',
+        IntlDateFormatter::GREGORIAN,
+        "d 'de' MMMM 'de' yyyy"
+    );
+    $dataServidor = $formatter->format(new DateTime());
+}
+if ($dataServidor === null || $dataServidor === false) {
+    $dataServidor = date('d/m/Y');
+}
 
 $canvas = $dompdf->getCanvas();
 $font = $dompdf->getFontMetrics()->getFont('Helvetica', 'normal');
@@ -283,5 +332,4 @@ $xPageNum = $pageWidth - $pageTextWidth - 40;
 $canvas->page_text($xData, $y, $dataText, $font, $fontSize, [0, 0, 0]);
 $canvas->page_text($xPageNum, $y, $pageText, $font, $fontSize, [0, 0, 0]);
 
-
-$dompdf->stream("relatorio_jurado.pdf", ["Attachment" => false]);
+$dompdf->stream('relatorio_jurado_' . $id_jurado . '.pdf', ['Attachment' => false]);

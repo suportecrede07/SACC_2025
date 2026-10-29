@@ -9,12 +9,12 @@
       font-size: 0.92rem;
       transition: all 0.2s ease;
       background: transparent;
-      color: #000000;
+      color: #0f172a !important; /* Texto sempre preto/escuro legível */
     }
 
     .config-tab-btn:hover {
       background-color: #f1f5f9;
-      color: #0f172a;
+      color: #000000 !important;
     }
 
     .config-tab-btn.active {
